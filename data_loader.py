@@ -10,21 +10,23 @@ class DataCreator:
     def __init__(self, dataset_name, task_type="lang", model_names="all"):
         if task_type not in ["lang", "vision"]:
             raise RuntimeError("task type is not understood.")
-
         if task_type == "lang" and dataset_name not in ["gsm8k", "mmlu_hf", "search_qa", "xsum"]:
             raise RuntimeError("input dataset can't found")
         elif task_type == "vision" and dataset_name not in ["miniimagenet", "cub", "fc100"]:
             raise RuntimeError("input dataset can't found")
-
         self.dataset_load_dict = {
             "mmlu_hf": self._load_mmlu_prob_and_label
         }
-
+        self.task_type = task_type
+        self.dataset_name = dataset_name
         self.model_names = model_names
-        self.data = None
-        if task_type == "lang":
-            self.data = self.dataset_load_dict[dataset_name]()
 
+    def create(self):
+        if self.task_type == "lang":
+            data, num_models = self.dataset_load_dict[self.dataset_name]()
+        if num_models == 0:
+            raise RuntimeError
+        return data, num_models
 
     def _load_mmlu_prob_and_label(self):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "mmlu_hf")
@@ -35,6 +37,7 @@ class DataCreator:
         else:
             model_names = self.model_names
 
+        num_models = len(model_names)
         data_df_names = [os.path.basename(fname) for fname in
                         glob.glob(f"{data_path}/{model_names[0]}/*.csv")]
         data_df_names = sorted(data_df_names)
@@ -53,7 +56,7 @@ class DataCreator:
             df_pred = np.concatenate(df_pred, axis=1)
             data.append(np.concatenate([df_pred, df_label[0][:, None]], axis=1))
         data = np.concatenate(data)
-        return data
+        return data, num_models
 
 
 if __name__ == "__main__":

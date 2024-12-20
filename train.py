@@ -1,10 +1,17 @@
 import torch
-from ens_env import StockTradingEnv
+from env.ens_env import EnsembleEnv
 from focal_agent import PolicyNetwork, REINFORCE
+from data_loader import DataCreator
 
 
 def train():
-    env = StockTradingEnv(data)
+    dataset_name="mmlu_hf"
+    model_names = "all"
+
+    datacreator = DataCreator(dataset_name, model_names=model_names, task_type="lang")
+    data, num_models = datacreator.create()
+
+    env = EnsembleEnv(data, num_models)
     policy = PolicyNetwork(input_dim=env.observation_space.shape[0], output_dim=env.action_space.n)
     agent = REINFORCE(policy)
 
