@@ -2,8 +2,8 @@ import numpy as np
 import gym
 from gym import spaces
 
-class StockTradingEnv(gym.Env):
-    def __init__(self, data, initial_balance=10000):
+class EnsembleEnv(gym.Env):
+    def __init__(self, data, num_models, initial_balance=10000):
         super(StockTradingEnv, self).__init__()
         self.data = data  # Historical stock prices
         self.initial_balance = initial_balance
