@@ -9,7 +9,7 @@ class PolicyNetwork(nn.Module):
             nn.Linear(input_dim, 128),
             nn.ReLU(),
             nn.Linear(128, output_dim),
-            nn.Softmax(dim=-1)
+            nn.Sigmoid()
         )
 
     def forward(self, x):

@@ -12,7 +12,7 @@ def train():
     data, num_models = datacreator.create()
 
     env = EnsembleEnv(data, num_models)
-    policy = PolicyNetwork(input_dim=env.observation_space.shape[0], output_dim=env.action_space.n)
+    policy = PolicyNetwork(input_dim=env.obsv_space_len, output_dim=env.ac_space_len)
     agent = REINFORCE(policy)
 
     for episode in range(1000):  # Train for 1000 episodes
@@ -20,18 +20,18 @@ def train():
         done = False
         episode_reward = 0
         
-        while not done:
+        while env.current_step < 4000:
             state = torch.tensor(state, dtype=torch.float32)
             action_probs = policy(state)
-            action_dist = torch.distributions.Categorical(action_probs)
+            action_dist = torch.distributions.Binomial(1, action_probs)
             action = action_dist.sample()
             
-            next_state, reward, done, _ = env.step(action.item())
+            next_state, reward, done, _ = env.step(action.numpy())
             agent.store_outcome(action_dist.log_prob(action), reward)
             
             state = next_state
             episode_reward += reward
-        
+
         agent.update_policy()
         print(f"Episode {episode + 1}, Total Reward: {episode_reward}")
 

@@ -2,6 +2,7 @@ import numpy as np
 import gym
 from gym import spaces
 
+from env.ens_methods import voting
 from env.ens_metrics import fitness_function
 
 class HistData:
@@ -10,7 +11,7 @@ class HistData:
     
     def __getitem__(self, key):
         # Check if the key is a slice
-        if isinstance(key, slice):
+        if isinstance(key, slice) or isinstance(key, int):
             # Create a new dictionary with sliced values
             sliced_dict = {k: v[key] for k, v in self.data_dict.items()}
             return HistData(sliced_dict)
@@ -27,7 +28,6 @@ class EnsembleEnv(gym.Env):
     def __init__(self, data, num_models):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
-        self.current_step = int(len(data) * .25)
         self.num_models = num_models
 
         # parse the data
@@ -35,15 +35,18 @@ class EnsembleEnv(gym.Env):
 
         # create initial model pool randomly
         self.init_model_pool = np.random.randint(high=2, low=0, size=(num_models))
+        self.initial_step = int(len(data) * .25)
+        self.current_step = self.initial_step
+        self.current_model_pool = self.init_model_pool
 
         # set the initial states:
-        self.current_score = self._get_observation(self.init_model_pool)
-        # - initial model repr.
-        # - initial model fitness score.
+        self.current_state = self._get_observation()
+        self.current_reward = self._evaluate_pool()
 
-        # Define action and observation space
-        self.action_space = spaces.Discrete(3)  # 0: Hold, 1: Buy, 2: Sell
-        self.observation_space = spaces.Box(low=0, high=1, shape=(data.shape[1],), dtype=np.float32)
+        # set the space lengths
+        self.obsv_space_len = len(self.current_state)
+        self.ac_space_len = num_models
+
 
     def _parse_data(self):
         labels = self.data[:, -1]
@@ -59,34 +62,45 @@ class EnsembleEnv(gym.Env):
         }
         return HistData(data_dict)
 
-    def _get_observation(self, model_pool):
+    def _get_observation(self):
         hist_data = self.hist_data[:self.current_step]
-        score = fitness_function(model_pool, [0.5, 0.5], hist_data)
-        return score
+        score = fitness_function(self.current_model_pool, [0.5, 0.5], hist_data)
+        observation = np.append(self.current_model_pool, score)
+        return observation
+
+    def _evaluate_pool(self):
+        if sum(self.current_model_pool) < 2:
+            return -99
+        current_data = self.hist_data[self.current_step]
+        comb_idx = self.current_model_pool.astype(bool)
+        x, y = current_data["pred_arr"][comb_idx], current_data["label_arr"].astype(int)
+
+        # todo: make better prediction
+        ens_pred = voting(x[None, :], method="plurality")
+        if  y == ens_pred:
+            reward = 1
+        else:
+            reward = -1
+        return reward
 
     def reset(self):
-        self.current_step = 0
-        self.stock_owned = 0
+        self.current_step = self.initial_step
+        self.current_model_pool = np.random.randint(
+            high=2, low=0, size=(self.num_models))
+        self.current_reward = 0
         return self._get_observation()
 
     def step(self, action):
-        current_price = self.data[self.current_step]
-        reward = 0
+        self.current_model_pool = action.astype(int)
 
         # Execute action
-        if action == 1:  # Buy
-            shares_to_buy = self.cash // current_price
-            self.stock_owned += shares_to_buy
-            self.cash -= shares_to_buy * current_price
-        elif action == 2:  # Sell
-            self.cash += self.stock_owned * current_price
-            self.stock_owned = 0
-        
-        # Update portfolio value
-        self.total_value = self.cash + self.stock_owned * current_price
-        reward = self.total_value - self.initial_balance  # Reward as profit/loss
         self.current_step += 1
+        reward = self._evaluate_pool()
         
+        # Update reward
+        reward = self.current_reward + reward
+        self.current_reward = reward
+     
         done = self.current_step >= len(self.data) - 1
         return self._get_observation(), reward, done, {}
     
