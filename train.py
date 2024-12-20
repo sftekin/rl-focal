@@ -23,19 +23,17 @@ def train():
         while env.current_step < 4000:
             state = torch.tensor(state, dtype=torch.float32)
             action_probs = policy(state)
-            action_dist = torch.distributions.Binomial(1, action_probs)
-            action = action_dist.sample()
-            
+            action = (action_probs > 0.5).int()
+            # action = action_dist.sample()
+
             next_state, reward, done, _ = env.step(action.numpy())
-            agent.store_outcome(action_dist.log_prob(action), reward)
-            
+            agent.store_outcome(torch.log(action_probs), reward)
+
             state = next_state
             episode_reward += reward
 
         agent.update_policy()
         print(f"Episode {episode + 1}, Total Reward: {episode_reward}")
-
-
 
 
 

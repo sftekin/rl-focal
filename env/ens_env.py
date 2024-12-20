@@ -70,7 +70,7 @@ class EnsembleEnv(gym.Env):
 
     def _evaluate_pool(self):
         if sum(self.current_model_pool) < 2:
-            return -99
+            return 0
         current_data = self.hist_data[self.current_step]
         comb_idx = self.current_model_pool.astype(bool)
         x, y = current_data["pred_arr"][comb_idx], current_data["label_arr"].astype(int)
@@ -80,7 +80,7 @@ class EnsembleEnv(gym.Env):
         if  y == ens_pred:
             reward = 1
         else:
-            reward = -1
+            reward = 0
         return reward
 
     def reset(self):
