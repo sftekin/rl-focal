@@ -21,12 +21,15 @@ class DataCreator:
         self.dataset_name = dataset_name
         self.model_names = model_names
 
+        # some dataset specific arguments
+        self.train_ratio = 0.8
+
     def create(self):
         if self.task_type == "lang":
-            data, num_models = self.dataset_load_dict[self.dataset_name]()
+            train_data, test_data, num_models = self.dataset_load_dict[self.dataset_name]()
         if num_models == 0:
             raise RuntimeError
-        return data, num_models
+        return train_data, test_data, num_models
 
     def _load_mmlu_prob_and_label(self):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "mmlu_hf")
@@ -56,7 +59,12 @@ class DataCreator:
             df_pred = np.concatenate(df_pred, axis=1)
             data.append(np.concatenate([df_pred, df_label[0][:, None]], axis=1))
         data = np.concatenate(data)
-        return data, num_models
+        ds_len = len(data)
+        train_size = int(ds_len * self.train_ratio)
+        train_data = data[:train_size]
+        test_data = data[train_size:]
+
+        return train_data, test_data, num_models
 
 
 if __name__ == "__main__":
