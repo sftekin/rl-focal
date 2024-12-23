@@ -3,3 +3,9 @@ __pycache__/
 
 data/*
 !data/.gitkeep
+
+results/checkpoints/*
+!results/checkpoints/.gitkeep
+
+results/figures/*
+!results/figures/.gitkeep

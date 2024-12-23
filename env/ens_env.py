@@ -29,9 +29,11 @@ class EnsembleEnv(gym.Env):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
+        self.window_size = 500
 
         # parse the data
         self.hist_data = self._parse_data()
+        self.total_len = len(data)
 
         # create initial model pool randomly
         self.init_model_pool = np.random.randint(high=2, low=0, size=(num_models))
@@ -104,3 +106,5 @@ class EnsembleEnv(gym.Env):
         done = self.current_step >= len(self.data) - 1
         return self._get_observation(), reward, done, {}
     
+    def get_current_progress(self):
+        return int(self.current_step / self.total_len * 100)
