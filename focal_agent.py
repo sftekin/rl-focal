@@ -11,9 +11,34 @@ class PolicyNetwork(nn.Module):
             nn.Linear(128, output_dim),
             nn.Sigmoid()
         )
-
     def forward(self, x):
         return self.fc(x)
+
+
+class MLP(nn.Module):
+    def __init__(self, input_dim, hidden_dim, output_dim):
+        super(MLP, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim[0]),
+            nn.Sigmoid(),
+            nn.Linear(hidden_dim[0], hidden_dim[1]),
+            nn.Sigmoid(),
+            nn.Linear(hidden_dim[1], output_dim),
+            nn.Sigmoid()
+        )
+        self.net.apply(self.init_weights)
+
+    def forward(self, x):
+        out = self.net(x)
+        out = torch.softmax(out, dim=-1)
+        return out
+
+    @staticmethod
+    def init_weights(m):
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform(m.weight)
+            m.bias.data.fill_(0.01)
+
 
 
 class REINFORCE:

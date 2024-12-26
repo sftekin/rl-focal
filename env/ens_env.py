@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 import gym
 from gym import spaces
@@ -25,11 +26,12 @@ class HistData:
 
 
 class EnsembleEnv(gym.Env):
-    def __init__(self, data, num_models, window_size=500):
+    def __init__(self, data, num_models, window_size=500, device="cuda"):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
         self.window_size = window_size
+        self.device = device
 
         assert self.window_size < len(self.data)
 
@@ -59,6 +61,7 @@ class EnsembleEnv(gym.Env):
         bin_preds = np.concatenate([a.argmax(axis=1)[:, None] for a in indv_probs], axis=1)
         error_arr = (bin_preds == labels_arr).astype(int)
         data_dict = {
+            "prob_arr": probs,
             "error_arr": error_arr,
             "pred_arr": bin_preds,
             "label_arr": labels,
@@ -72,20 +75,29 @@ class EnsembleEnv(gym.Env):
         observation = np.append(self.current_model_pool, score)
         return observation
 
-    def _evaluate_pool(self):
+    def _evaluate_pool(self, prediction_policy):
         if sum(self.current_model_pool) < 2:
-            return 0
+            return 0, None
         current_data = self.hist_data[self.current_step]
         comb_idx = self.current_model_pool.astype(bool)
-        x, y = current_data["pred_arr"][comb_idx], current_data["label_arr"].astype(int)
+        x, y = current_data["pred_arr"], current_data["label_arr"].astype(int)
 
-        # todo: make better prediction
-        ens_pred = voting(x[None, :], method="plurality")
+        ens_pred = None
+        if prediction_policy is None:
+            ens_pred = voting(x[comb_idx][None, :], method="plurality")
+            pred_probs = None
+        else:
+            mask = np.repeat(comb_idx, 4)
+            x = current_data["prob_arr"] * mask.astype(int)
+            x = torch.tensor(x, dtype=torch.float32).to(self.device)
+            pred_probs = prediction_policy(x.unsqueeze(0))
+            ens_pred = pred_probs.argmax(dim=1).detach().item()
+
         if  y == ens_pred:
             reward = 1
         else:
             reward = 0
-        return reward
+        return reward, pred_probs
 
     def reset(self):
         self.current_step = self.initial_step
@@ -93,16 +105,16 @@ class EnsembleEnv(gym.Env):
             high=2, low=0, size=(self.num_models))
         return self._get_observation()
 
-    def step(self, action):
+    def step(self, action, prediction_policy=None):
         self.current_model_pool = action.astype(int)
 
         # Execute action
         self.current_step += 1
-        reward = self._evaluate_pool()
+        reward, pred_probs = self._evaluate_pool(prediction_policy)
         
         # Update reward
         # reward = self.current_reward + reward
         # self.current_reward = reward
      
         done = self.current_step >= len(self.data) - 1
-        return self._get_observation(), reward, done, {}
+        return self._get_observation(), reward, pred_probs
