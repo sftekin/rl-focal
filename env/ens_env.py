@@ -26,7 +26,7 @@ class HistData:
 
 
 class EnsembleEnv(gym.Env):
-    def __init__(self, data, num_models, window_size=500, device="cuda"):
+    def __init__(self, data, num_models, window_size=-1, device="cuda"):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
@@ -37,13 +37,13 @@ class EnsembleEnv(gym.Env):
 
         # parse the data
         self.hist_data = self._parse_data()
-        self.total_len = len(data)
 
         # create initial model pool randomly
         self.init_model_pool = np.random.randint(high=2, low=0, size=(num_models))
-        self.initial_step = self.window_size if window_size > 0 else int(self.total_len * 0.1)
+        self.initial_step = self.window_size if window_size > 0 else int(len(data) * 0.1)
         self.current_step = self.initial_step
         self.current_model_pool = self.init_model_pool
+        self.total_len = len(data) - self.initial_step
 
         # set the initial states:
         self.current_state = self._get_observation()
@@ -89,14 +89,21 @@ class EnsembleEnv(gym.Env):
         else:
             mask = np.repeat(comb_idx, 4)
             x = current_data["prob_arr"] * mask.astype(int)
+            # x = current_data["prob_arr"]
             x = torch.tensor(x, dtype=torch.float32).to(self.device)
-            pred_probs = prediction_policy(x.unsqueeze(0))
-            ens_pred = pred_probs.argmax(dim=1).detach().item()
+            pred_probs = prediction_policy(x)
+            ens_pred = pred_probs.argmax().item()
+            pred_probs = pred_probs[ens_pred]
 
-        if  y == ens_pred:
+            # m = torch.distributions.Categorical(pred_probs)
+            # ens_pred = m.sample()
+            # pred_probs = m.log_prob(ens_pred)
+
+        if y == ens_pred:
             reward = 1
         else:
-            reward = 0
+            reward = -1
+
         return reward, pred_probs
 
     def reset(self):
@@ -116,5 +123,4 @@ class EnsembleEnv(gym.Env):
         # reward = self.current_reward + reward
         # self.current_reward = reward
      
-        done = self.current_step >= len(self.data) - 1
-        return self._get_observation(), reward, pred_probs
+        return None, reward, pred_probs

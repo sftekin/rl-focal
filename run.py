@@ -24,10 +24,11 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
     action_count = np.zeros(num_models)
     exploration_noise = 0.01
     episode_reward = 0
-    for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 1)):
-        state = torch.tensor(state, dtype=torch.float32).to(device)
-        action_probs = select_policy(state)
-        action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
+    for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
+        # state = torch.tensor(state, dtype=torch.float32).to(device)
+        # action_probs = select_policy(state)
+        # action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
+        action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
 
         action_count += action
         
@@ -37,18 +38,24 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
             next_state, reward, pred_prob = train_env.step(action)
 
         if select_update: select_agent.store_outcome(torch.log(action_probs), reward)
-        if ens_update: ens_agent.store_outcome(torch.log(pred_prob), reward)
+        if ens_update: ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
         state = next_state
-        episode_reward += reward
+        episode_reward += np.max([reward, 0])
+
+        if ens_update and count % 100 == 0:
+            ens_agent.update_policy()
+            total_weight_sum = 0.0
+            # for param in ens_policy.parameters():
+            #     if param.requires_grad:  # Include only trainable parameters
+            #         total_weight_sum += param.abs().sum().item()  # Use abs to avoid sign cancellation
+            # print("total weight sum", total_weight_sum)
 
     if select_update:
         select_agent.update_policy()
-    
-    if ens_update:
-        ens_agent.update_policy()
+
 
     print(f"Episode {ep_count}, Total Reward: {episode_reward}")
-    print(action_count / count)
+    print(action_count)
     return episode_reward
 
 
@@ -76,12 +83,12 @@ def train(train_data, num_models, n_episodes=100):
     }
 
     prev_reward = 0
-    exploration_noise = 0.01
+    exploration_noise = 0.1
     # fig, ax = plt.subplots()
     train_rewards = []
     for episode in range(n_episodes):
        
-        if episode < 50:
+        if episode > 150:
             episode_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
         else:
             select_args["update"] = False
@@ -109,7 +116,7 @@ def test(test_data, num_models, agent, policy):
     episode_reward = 0
     exploration_noise = 0
     action_count = np.zeros(num_models)
-    for count in tqdm.tqdm(range(test_env.total_len - test_env.initial_step - 1)):
+    for count in tqdm.tqdm(range(test_env.total_len - test_env.initial_step - 2)):
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action_probs = policy(state)
         action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
@@ -129,16 +136,16 @@ def test(test_data, num_models, agent, policy):
 
 def main():
     dataset_name="mmlu_hf"
-    model_names = "all"
+    # model_names = "all"
 
-    m_names = ["Llama-2-13b", "Llama-2-7b", 
-               "Mixtral-8x7B", "gemma-7b", "Llama-2-70b", 
-               "Mistral-7B", "gemma-2b", "phi-2"]
+    m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
+               'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',
+                 'Llama-2-70b-hf', 'Llama-2-7b-hf']
 
-    datacreator = DataCreator(dataset_name, model_names=model_names, task_type="lang")
+    datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    agent, policy = train(train_data, num_models, n_episodes=50)
+    agent, policy = train(train_data, num_models, n_episodes=100)
     # test(test_data, num_models, agent, policy)
 
 

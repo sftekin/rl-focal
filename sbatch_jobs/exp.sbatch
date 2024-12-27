@@ -8,4 +8,4 @@
 #SBATCH --mail-user=stekin6@gatech.edu        # E-mail address for notifications
 cd  $HOME/scratch/rl-focal                            # Change to working directory
 conda activate llamas
-./run.py
+python run.py

@@ -23,34 +23,26 @@ class MLP(nn.Module):
             nn.Sigmoid(),
             nn.Linear(hidden_dim[0], hidden_dim[1]),
             nn.Sigmoid(),
-            nn.Linear(hidden_dim[1], output_dim),
-            nn.Sigmoid()
+            nn.Linear(hidden_dim[1], output_dim)
         )
-        self.net.apply(self.init_weights)
 
     def forward(self, x):
         out = self.net(x)
         out = torch.softmax(out, dim=-1)
         return out
 
-    @staticmethod
-    def init_weights(m):
-        if isinstance(m, nn.Linear):
-            torch.nn.init.xavier_uniform(m.weight)
-            m.bias.data.fill_(0.01)
-
-
 
 class REINFORCE:
-    def __init__(self, policy_network, lr=0.0001):
+    def __init__(self, policy_network, lr=0.001):
         self.policy = policy_network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
         self.gamma = 0.5  # Discount factor
         self.log_probs = []
         self.rewards = []
 
-    def store_outcome(self, log_prob, reward):
-        self.log_probs.append(log_prob.sum())
+    def store_outcome(self, log_prob, reward, sum_flag=False):
+        if sum_flag: self.log_probs.append(log_prob.sum())
+        else: self.log_probs.append(log_prob)
         self.rewards.append(reward)
 
     def update_policy(self):
@@ -72,6 +64,7 @@ class REINFORCE:
         loss = torch.stack(loss).sum()
         loss.backward()
         self.optimizer.step()
+        # print(loss)
         
         self.log_probs = []
         self.rewards = []
