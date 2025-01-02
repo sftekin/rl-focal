@@ -10,7 +10,6 @@ import matplotlib.pyplot as plt
 
 device = "cuda"
 
-
 def step_policy(train_env, select_args, ens_args, num_models, ep_count):
     select_policy = select_args["policy"] 
     select_agent = select_args["agent"]
@@ -29,7 +28,6 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
         # action_probs = select_policy(state)
         # action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
         action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
-
         action_count += action
         
         if ens_update:
@@ -37,31 +35,28 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
         else:
             next_state, reward, pred_prob = train_env.step(action)
 
-        if select_update: select_agent.store_outcome(torch.log(action_probs), reward)
-        if ens_update: ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
+        if select_update: 
+            select_agent.store_outcome(torch.log(action_probs), reward)
+        if ens_update: 
+            ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
+
         state = next_state
         episode_reward += np.max([reward, 0])
 
-        if ens_update and count % 100 == 0:
-            ens_agent.update_policy()
-            total_weight_sum = 0.0
-            # for param in ens_policy.parameters():
-            #     if param.requires_grad:  # Include only trainable parameters
-            #         total_weight_sum += param.abs().sum().item()  # Use abs to avoid sign cancellation
-            # print("total weight sum", total_weight_sum)
+        if count % 100 == 0:
+            if ens_update:
+                ens_agent.update_policy()
 
-    if select_update:
-        select_agent.update_policy()
+            if select_update:
+                select_agent.update_policy()
 
-
-    print(f"Episode {ep_count}, Total Reward: {episode_reward}")
+    print(f"Total Acc: {(episode_reward / count) * 100:.2f}%")
     print(action_count)
     return episode_reward
 
 
 
-
-def train(train_data, num_models, n_episodes=100):
+def train(train_data, test_data, num_models, n_episodes=100):
     train_env = EnsembleEnv(train_data, num_models, device=device)
     policy1 = PolicyNetwork(input_dim=train_env.obsv_space_len, 
                            output_dim=train_env.ac_space_len).to(device)
@@ -108,30 +103,57 @@ def train(train_data, num_models, n_episodes=100):
     agents = (agent1, agent2)
     policies = (policy1, policy2)
 
+    test(test_data, select_args, ens_args, num_models)
+
     return agents, policies
 
-def test(test_data, num_models, agent, policy):
+def test(test_data, select_args, ens_args, num_models):
     test_env = EnsembleEnv(test_data, num_models, window_size=0)
+    select_policy = select_args["policy"] 
+    select_agent = select_args["agent"]
+    select_update = select_args["update"]
+
+    ens_policy = ens_args["policy"] 
+    ens_agent = ens_args["agent"]
+    ens_update = ens_args["update"]
+
     state = test_env.reset()
     episode_reward = 0
     exploration_noise = 0
     action_count = np.zeros(num_models)
     for count in tqdm.tqdm(range(test_env.total_len - test_env.initial_step - 2)):
-        state = torch.tensor(state, dtype=torch.float32).to(device)
-        action_probs = policy(state)
-        action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
+        # state = torch.tensor(state, dtype=torch.float32).to(device)
+        # action_probs = policy(state)
+        # action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
         # action = action_dist.sample()
-
+        action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
         action_count += action
-        next_state, reward, pred_prob = test_env.step(action)
-        agent.store_outcome(torch.log(action_probs), reward)
+
+        if ens_update:
+            next_state, reward, pred_prob = test_env.step(action, ens_policy)
+        else:
+            next_state, reward, pred_prob = test_env.step(action)
+
+        if select_update: 
+            select_agent.store_outcome(torch.log(action_probs), reward)
+        if ens_update: 
+            ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
 
         state = next_state
-        episode_reward += reward
+        episode_reward += np.max([reward, 0])
 
-        agent.update_policy()
-    print(f"Test Total Reward: {episode_reward}")
+        if count % 100 == 0:
+            if ens_update:
+                ens_agent.update_policy()
+
+            if select_update:
+                select_agent.update_policy()
+
     print(f"Total Acc: {(episode_reward / count) * 100:.2f}%")
+    print(f"Total Reward: {episode_reward}")
+    print(action_count)
+
+
 
 
 def main():
@@ -145,7 +167,7 @@ def main():
     datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    agent, policy = train(train_data, num_models, n_episodes=100)
+    agent, policy = train(train_data, test_data, num_models, n_episodes=10)
     # test(test_data, num_models, agent, policy)
 
 
