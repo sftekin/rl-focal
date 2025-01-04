@@ -73,6 +73,7 @@ class EnsembleEnv(gym.Env):
         hist_data = self.hist_data[start_idx:self.current_step]
         score = fitness_function(self.current_model_pool, [0.5, 0.5], hist_data)
         observation = np.append(self.current_model_pool, score)
+        observation = np.append(observation, self.current_model_pool.sum())
         return observation
 
     def _evaluate_pool(self, prediction_policy):
@@ -101,15 +102,18 @@ class EnsembleEnv(gym.Env):
 
         if y == ens_pred:
             reward = 1
+        # elif prediction_policy is not None:
+        #     reward = -1
         else:
-            reward = -1
+            reward = -1 - (comb_idx.sum() / len(comb_idx))
 
         return reward, pred_probs
 
     def reset(self):
         self.current_step = self.initial_step
-        self.current_model_pool = np.random.randint(
-            high=2, low=0, size=(self.num_models))
+        # self.current_model_pool = np.random.randint(
+        #     high=2, low=0, size=(self.num_models))
+        self.current_model_pool = np.array([1, 1, 1, 1, 1, 1, 1, 1])
         return self._get_observation()
 
     def step(self, action, prediction_policy=None):
@@ -123,4 +127,4 @@ class EnsembleEnv(gym.Env):
         # reward = self.current_reward + reward
         # self.current_reward = reward
      
-        return None, reward, pred_probs
+        return self._get_observation(), reward, pred_probs

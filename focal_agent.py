@@ -36,7 +36,7 @@ class REINFORCE:
     def __init__(self, policy_network, lr=0.001):
         self.policy = policy_network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
-        self.gamma = 0.5  # Discount factor
+        self.gamma = 0.99  # Discount factor
         self.log_probs = []
         self.rewards = []
 
@@ -54,8 +54,9 @@ class REINFORCE:
             discounted_rewards.insert(0, R)
         
         discounted_rewards = torch.tensor(discounted_rewards)
-        # discounted_rewards = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-9)  # Normalize
-        
+        discounted_rewards = (discounted_rewards - discounted_rewards.mean()
+                              ) / (discounted_rewards.std() + 1e-9)  # Normalize
+
         loss = []
         for log_prob, reward in zip(self.log_probs, discounted_rewards):
             loss.append(-log_prob * reward)
@@ -64,7 +65,6 @@ class REINFORCE:
         loss = torch.stack(loss).sum()
         loss.backward()
         self.optimizer.step()
-        # print(loss)
         
         self.log_probs = []
         self.rewards = []

@@ -24,26 +24,28 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
     exploration_noise = 0.01
     episode_reward = 0
     for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
-        # state = torch.tensor(state, dtype=torch.float32).to(device)
-        # action_probs = select_policy(state)
-        # action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
-        action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
+        state = torch.tensor(state, dtype=torch.float32).to(device)
+        action_probs = select_policy(state)
+        action = (action_probs + torch.randn_like(action_probs) * exploration_noise 
+                  > 0.5).int().detach().cpu().numpy()
+        # action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
         action_count += action
-        
+
         if ens_update:
             next_state, reward, pred_prob = train_env.step(action, ens_policy)
         else:
             next_state, reward, pred_prob = train_env.step(action)
 
-        if select_update: 
-            select_agent.store_outcome(torch.log(action_probs), reward)
-        if ens_update: 
+        if select_update:
+            action_probs = action_probs[action.astype(bool)] 
+            select_agent.store_outcome(torch.log(action_probs), reward, sum_flag=True)
+        if ens_update:
             ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
 
         state = next_state
         episode_reward += np.max([reward, 0])
 
-        if count % 100 == 0:
+        if count % 1000 == 0 and count > 0:
             if ens_update:
                 ens_agent.update_policy()
 
@@ -57,7 +59,7 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
 
 
 def train(train_data, test_data, num_models, n_episodes=100):
-    train_env = EnsembleEnv(train_data, num_models, device=device)
+    train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500)
     policy1 = PolicyNetwork(input_dim=train_env.obsv_space_len, 
                            output_dim=train_env.ac_space_len).to(device)
     policy2 = MLP(num_models * 4, [100, 100], 4).to(device)
@@ -83,7 +85,7 @@ def train(train_data, test_data, num_models, n_episodes=100):
     train_rewards = []
     for episode in range(n_episodes):
        
-        if episode > 150:
+        if episode < 50:
             episode_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
         else:
             select_args["update"] = False
@@ -167,7 +169,7 @@ def main():
     datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    agent, policy = train(train_data, test_data, num_models, n_episodes=10)
+    agent, policy = train(train_data, test_data, num_models, n_episodes=100)
     # test(test_data, num_models, agent, policy)
 
 
