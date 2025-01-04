@@ -21,14 +21,14 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
 
     state = train_env.reset()
     action_count = np.zeros(num_models)
-    exploration_noise = 0.01
     episode_reward = 0
     for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action_probs = select_policy(state)
-        action = (action_probs + torch.randn_like(action_probs) * exploration_noise 
-                  > 0.5).int().detach().cpu().numpy()
-        # action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
+        dists = [torch.distributions.Categorical(prob) for prob in action_probs]
+        action = [dist.sample() for dist in dists]
+        log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
+        action = np.array([a.detach().item() for a in action])
         action_count += action
 
         if ens_update:
@@ -37,22 +37,21 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
             next_state, reward, pred_prob = train_env.step(action)
 
         if select_update:
-            action_probs = action_probs[action.astype(bool)] 
-            select_agent.store_outcome(torch.log(action_probs), reward, sum_flag=True)
+            select_agent.store_outcome(log_probs, reward)
         if ens_update:
-            ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
+            ens_agent.store_outcome(torch.log(pred_prob), reward)
 
         state = next_state
         episode_reward += np.max([reward, 0])
 
-        if count % 1000 == 0 and count > 0:
+        if count % 100 == 0 and count > 0:
             if ens_update:
                 ens_agent.update_policy()
 
             if select_update:
                 select_agent.update_policy()
 
-    print(f"Total Acc: {(episode_reward / count) * 100:.2f}%")
+    print(f"Episode: {ep_count}, Total Acc: {(episode_reward / count) * 100:.2f}%")
     print(action_count)
     return episode_reward
 
@@ -60,8 +59,8 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
 
 def train(train_data, test_data, num_models, n_episodes=100):
     train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500)
-    policy1 = PolicyNetwork(input_dim=train_env.obsv_space_len, 
-                           output_dim=train_env.ac_space_len).to(device)
+    policy1 = PolicyNetwork(train_env.obsv_space_len, 
+                            np.ones(train_env.ac_space_len).astype(int) * 2).to(device)
     policy2 = MLP(num_models * 4, [100, 100], 4).to(device)
 
     agent1 = REINFORCE(policy1)
@@ -121,14 +120,13 @@ def test(test_data, select_args, ens_args, num_models):
 
     state = test_env.reset()
     episode_reward = 0
-    exploration_noise = 0
     action_count = np.zeros(num_models)
     for count in tqdm.tqdm(range(test_env.total_len - test_env.initial_step - 2)):
-        # state = torch.tensor(state, dtype=torch.float32).to(device)
-        # action_probs = policy(state)
-        # action = (action_probs + torch.randn_like(action_probs) * exploration_noise > 0.5).int().detach().cpu().numpy()
-        # action = action_dist.sample()
-        action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
+        action_probs = select_policy(state)
+        dists = [torch.distributions.Categorical(prob) for prob in action_probs]
+        action = [dist.sample() for dist in dists]
+        log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
+        action = np.array([a.detach().item() for a in action])
         action_count += action
 
         if ens_update:
@@ -136,10 +134,10 @@ def test(test_data, select_args, ens_args, num_models):
         else:
             next_state, reward, pred_prob = test_env.step(action)
 
-        if select_update: 
-            select_agent.store_outcome(torch.log(action_probs), reward)
-        if ens_update: 
-            ens_agent.store_outcome(torch.log(pred_prob), reward, sum_flag=False)
+        if select_update:
+            select_agent.store_outcome(log_probs, reward)
+        if ens_update:
+            ens_agent.store_outcome(torch.log(pred_prob), reward)
 
         state = next_state
         episode_reward += np.max([reward, 0])
@@ -151,16 +149,12 @@ def test(test_data, select_args, ens_args, num_models):
             if select_update:
                 select_agent.update_policy()
 
-    print(f"Total Acc: {(episode_reward / count) * 100:.2f}%")
-    print(f"Total Reward: {episode_reward}")
+    print(f"Test Acc: {(episode_reward / count) * 100:.2f}%")
     print(action_count)
-
-
 
 
 def main():
     dataset_name="mmlu_hf"
-    # model_names = "all"
 
     m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
                'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',

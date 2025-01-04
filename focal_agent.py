@@ -1,18 +1,20 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 
 class PolicyNetwork(nn.Module):
-    def __init__(self, input_dim, output_dim):
+    def __init__(self, input_dim, action_dims):
         super(PolicyNetwork, self).__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(input_dim, 128),
-            nn.ReLU(),
-            nn.Linear(128, output_dim),
-            nn.Sigmoid()
-        )
+        self.fc = nn.Linear(input_dim, 128)
+        self.action_heads = nn.ModuleList([
+            nn.Linear(128, dim) for dim in action_dims
+        ])
+
     def forward(self, x):
-        return self.fc(x)
+        x = F.relu(self.fc(x))
+        outputs = [F.softmax(head(x), dim=-1) for head in self.action_heads]
+        return outputs
 
 
 class MLP(nn.Module):
@@ -33,16 +35,16 @@ class MLP(nn.Module):
 
 
 class REINFORCE:
-    def __init__(self, policy_network, lr=0.001):
+    def __init__(self, policy_network, lr=0.001, clip_epsilon=0.2, gamma=0.99):
         self.policy = policy_network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
-        self.gamma = 0.99  # Discount factor
+        self.gamma = gamma
+        self.clip_epsilon = clip_epsilon
         self.log_probs = []
         self.rewards = []
 
-    def store_outcome(self, log_prob, reward, sum_flag=False):
-        if sum_flag: self.log_probs.append(log_prob.sum())
-        else: self.log_probs.append(log_prob)
+    def store_outcome(self, log_prob, reward):
+        self.log_probs.append(log_prob)
         self.rewards.append(reward)
 
     def update_policy(self):
@@ -52,20 +54,25 @@ class REINFORCE:
         for r in reversed(self.rewards):
             R = r + self.gamma * R
             discounted_rewards.insert(0, R)
-        
-        discounted_rewards = torch.tensor(discounted_rewards)
-        discounted_rewards = (discounted_rewards - discounted_rewards.mean()
-                              ) / (discounted_rewards.std() + 1e-9)  # Normalize
 
-        loss = []
-        for log_prob, reward in zip(self.log_probs, discounted_rewards):
-            loss.append(-log_prob * reward)
-        
+        discounted_rewards = torch.tensor(discounted_rewards)
+        advantages = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-9)
+
+        # Compute PPO loss with clipping
+        policy_loss = []
+        for log_probs, advantage in zip(self.log_probs, advantages):
+            for log_prob in log_probs:
+                ratio = torch.exp(log_prob - log_prob.detach())
+                surr1 = ratio * advantage
+                surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantage
+                policy_loss.append(-torch.min(surr1, surr2))
+
+        # Optimize policy network
         self.optimizer.zero_grad()
-        loss = torch.stack(loss).sum()
-        loss.backward()
+        policy_loss = torch.stack(policy_loss).mean()
+        policy_loss.backward()
         self.optimizer.step()
-        
+
+        # Clear memory
         self.log_probs = []
         self.rewards = []
-
