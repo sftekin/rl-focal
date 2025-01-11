@@ -77,33 +77,31 @@ class EnsembleEnv(gym.Env):
         return observation
 
     def _evaluate_pool(self, prediction_policy):
-        if sum(self.current_model_pool) < 2:
-            return 0, None
         current_data = self.hist_data[self.current_step]
         comb_idx = self.current_model_pool.astype(bool)
         x, y = current_data["pred_arr"], current_data["label_arr"].astype(int)
 
-        ens_pred = None
-        if prediction_policy is None:
+        if prediction_policy is None:            
+            if sum(self.current_model_pool) < 2:
+                return 0, None
             ens_pred = voting(x[comb_idx][None, :], method="plurality")
             pred_probs = None
         else:
             mask = np.repeat(comb_idx, 4)
             x = current_data["prob_arr"] * mask.astype(int)
-            # x = current_data["prob_arr"]
             x = torch.tensor(x, dtype=torch.float32).to(self.device)
             pred_probs = prediction_policy(x)
-            ens_pred = pred_probs.argmax().item()
-            pred_probs = pred_probs[ens_pred]
+            # ens_pred = pred_probs.argmax().item()
+            # pred_probs = pred_probs[ens_pred]
 
-            # m = torch.distributions.Categorical(pred_probs)
-            # ens_pred = m.sample()
-            # pred_probs = m.log_prob(ens_pred)
+            m = torch.distributions.Categorical(pred_probs)
+            ens_pred = m.sample()
+            pred_probs = m.log_prob(ens_pred)
 
         if y == ens_pred:
             reward = 1
-        # elif prediction_policy is not None:
-        #     reward = -1
+        elif prediction_policy is not None:
+            reward = -1
         else:
             reward = -1 - (comb_idx.sum() / len(comb_idx))
 
@@ -113,7 +111,7 @@ class EnsembleEnv(gym.Env):
         self.current_step = self.initial_step
         # self.current_model_pool = np.random.randint(
         #     high=2, low=0, size=(self.num_models))
-        self.current_model_pool = np.array([1, 1, 1, 1, 1, 1, 1, 1])
+        self.current_model_pool = np.ones(self.num_models).astype(int)
         return self._get_observation()
 
     def step(self, action, prediction_policy=None):
@@ -122,9 +120,5 @@ class EnsembleEnv(gym.Env):
         # Execute action
         self.current_step += 1
         reward, pred_probs = self._evaluate_pool(prediction_policy)
-        
-        # Update reward
-        # reward = self.current_reward + reward
-        # self.current_reward = reward
      
         return self._get_observation(), reward, pred_probs

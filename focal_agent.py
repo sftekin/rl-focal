@@ -35,13 +35,14 @@ class MLP(nn.Module):
 
 
 class REINFORCE:
-    def __init__(self, policy_network, lr=0.001, clip_epsilon=0.2, gamma=0.99):
+    def __init__(self, policy_network, lr=0.001, clip_epsilon=0.2, gamma=0.99, aggregate_loss="mean"):
         self.policy = policy_network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
         self.gamma = gamma
         self.clip_epsilon = clip_epsilon
         self.log_probs = []
         self.rewards = []
+        self.aggregate_loss = aggregate_loss
 
     def store_outcome(self, log_prob, reward):
         self.log_probs.append(log_prob)
@@ -69,7 +70,12 @@ class REINFORCE:
 
         # Optimize policy network
         self.optimizer.zero_grad()
-        policy_loss = torch.stack(policy_loss).mean()
+        if self.aggregate_loss == "mean":
+            policy_loss = torch.stack(policy_loss).mean()
+        elif self.aggregate_loss == "sum":
+            policy_loss = torch.stack(policy_loss).sum()
+        else:
+            raise RuntimeError
         policy_loss.backward()
         self.optimizer.step()
 
