@@ -38,11 +38,20 @@ class REINFORCE:
     def __init__(self, policy_network, lr=0.001, clip_epsilon=0.2, gamma=0.99, aggregate_loss="mean"):
         self.policy = policy_network
         self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.lr = lr
         self.gamma = gamma
         self.clip_epsilon = clip_epsilon
         self.log_probs = []
         self.rewards = []
         self.aggregate_loss = aggregate_loss
+
+    def update_policy_params(self, new_network):
+        self.policy = new_network
+        self.optimizer = optim.Adam(new_network.parameters(), lr=self.lr)
+        # Clear memory
+        self.log_probs = []
+        self.rewards = []
+
 
     def store_outcome(self, log_prob, reward):
         self.log_probs.append(log_prob)

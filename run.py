@@ -4,7 +4,7 @@ import tqdm
 import torch
 import numpy as np
 import glob
-from plotting import plot_actions, plot_rewards
+from plotting.plot import plot_actions, plot_rewards
 import matplotlib.pyplot as plt
 
 from env.ens_env import EnsembleEnv
@@ -13,6 +13,7 @@ from data_loader import DataCreator
 from config import RESULTS_DIR
 
 
+torch.autograd.set_detect_anomaly(True)
 device = "cuda"
 
 def get_last_checkpoint_dirname(checkpoint_dir):
@@ -82,13 +83,42 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count):
     return total_acc
 
 
+def train_loop(train_env, n_episodes, select_args, ens_args, num_models, max_tolerance=50):
+    best_reward, tol = 0, 0
+    agent_rw = []
+    best_ens_policy_dict = ens_args["policy"].state_dict()
+    best_select_policy_dict = select_args["policy"].state_dict()
+    for episode in range(n_episodes):
+        episode_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
+        agent_rw.append(episode_reward)
 
-def train(train_data, test_data, num_models, n_episodes=100):
+        if best_reward < episode_reward:
+            print("better reward")
+            tol = 0
+            best_ens_policy_dict = ens_args["policy"].state_dict()
+            best_select_policy_dict = select_args["policy"].state_dict()
+            best_reward = episode_reward
+        else:
+            tol += 1
+
+        if tol >= max_tolerance:
+            print("reached max tolerance breaking...")
+            break
+
+    ens_args["policy"].load_state_dict(best_ens_policy_dict)
+    ens_args["agent"].update_policy_params(ens_args["policy"])
+    
+    select_args["policy"].load_state_dict(best_select_policy_dict)
+    select_args["agent"].update_policy_params(select_args["policy"])
+
+    return agent_rw, select_args, ens_args
+
+
+def train_test(train_data, test_data, num_models, n_episodes=100):
     checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints")
     dir_name = get_last_checkpoint_dirname(checkpoint_dir)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-
 
     train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500)
     policy1 = PolicyNetwork(train_env.obsv_space_len, 
@@ -110,32 +140,13 @@ def train(train_data, test_data, num_models, n_episodes=100):
         "update": False
     }
 
-    prev_reward = 0
-    tol = 0
-    max_tolerance = 5
-    select_agent_rw = []
-    ens_agent_rw = []
-    for episode in range(n_episodes):
-       
-        if episode < n_episodes // 2:
-            episode_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
-            select_agent_rw.append(episode_reward)
-        else:
-            select_args["update"] = False
-            ens_args["update"] = True
-            episode_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
-            ens_agent_rw.append(episode_reward)
-
-        if prev_reward < episode_reward:
-            print("better reward")
-            tol = 0
-        else:
-            tol += 1
-        prev_reward = episode_reward
-
-        if tol >= max_tolerance:
-            print("reached max tolerance breaking...")
-            break
+    select_agent_rw, select_args, ens_args = train_loop(train_env, n_episodes // 2, select_args,
+                                                        ens_args, num_models, max_tolerance=100)
+    
+    select_args["update"] = False
+    ens_args["update"] = True
+    ens_agent_rw, select_args, ens_args = train_loop(train_env, n_episodes // 2, select_args,
+                                                    ens_args, num_models, max_tolerance=100)
 
     select_agent_rw = np.array(select_agent_rw)
     ens_agent_rw = np.array(ens_agent_rw)
@@ -154,9 +165,11 @@ def train(train_data, test_data, num_models, n_episodes=100):
     ens_args["update"] = True
     select_args["update"] = True
     test_env = EnsembleEnv(test_data, num_models, device=device, window_size=0)
-    test_reward = step_policy(train_env, select_args, ens_args, num_models, ep_count=episode)
+    test_reward = step_policy(test_env, select_args, ens_args, num_models, ep_count=0)
+    score_path = os.path.join(dir_name, "test_score.txt")
+    with open(score_path, "w") as file:
+        file.write(f"Test Acc: {test_reward:.2f}%\n")
     print(f"Test Acc: {test_reward:.2f}%")
-
     return agents, policies
 
 
@@ -169,7 +182,7 @@ def main(args):
     datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    train(train_data, test_data, num_models, n_episodes=50)
+    train_test(train_data, test_data, num_models, n_episodes=2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
