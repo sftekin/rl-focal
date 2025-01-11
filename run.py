@@ -162,7 +162,6 @@ def train(train_data, test_data, num_models, n_episodes=100):
 
 def main(args):
     dataset_name="mmlu_hf"
-
     m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
                'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',
                  'Llama-2-70b-hf', 'Llama-2-7b-hf']
