@@ -26,12 +26,13 @@ class HistData:
 
 
 class EnsembleEnv(gym.Env):
-    def __init__(self, data, num_models, window_size=-1, device="cuda"):
+    def __init__(self, data, num_models, window_size=-1, device="cuda", space_size=4):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
         self.window_size = window_size
         self.device = device
+        self.space_size = space_size
 
         assert self.window_size < len(self.data)
 
@@ -87,7 +88,7 @@ class EnsembleEnv(gym.Env):
             ens_pred = voting(x[comb_idx][None, :], method="plurality")
             pred_probs = None
         else:
-            mask = np.repeat(comb_idx, 4)
+            mask = np.repeat(comb_idx, self.space_size)
             x = current_data["prob_arr"] * mask.astype(int)
             x = torch.tensor(x, dtype=torch.float32).to(self.device)
             pred_probs = prediction_policy(x)

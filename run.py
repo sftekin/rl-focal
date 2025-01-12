@@ -15,6 +15,12 @@ from config import RESULTS_DIR
 
 torch.autograd.set_detect_anomaly(True)
 device = "cuda"
+space_size_dict = {
+    "gsm8k": 30,
+    "mmlu_hf": 4
+}
+
+
 
 def get_last_checkpoint_dirname(checkpoint_dir):
     cur_dirs = [f for f in glob.glob(os.path.join(checkpoint_dir, "exp_*"))]
@@ -114,16 +120,17 @@ def train_loop(train_env, n_episodes, select_args, ens_args, num_models, max_tol
     return agent_rw, select_args, ens_args
 
 
-def train_test(train_data, test_data, num_models, n_episodes=100):
-    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", "gsm8k")
+def train_test(train_data, test_data, num_models, task_name, n_episodes=100):
+    space_size = space_size_dict[task_name]
+    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", task_name)
     dir_name = get_last_checkpoint_dirname(checkpoint_dir)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
-    train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500)
+    train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500, space_size=space_size)
     policy1 = PolicyNetwork(train_env.obsv_space_len, 
                             np.ones(train_env.ac_space_len).astype(int) * 2).to(device)
-    policy2 = MLP(num_models * 30, [100, 100], 30).to(device)
+    policy2 = MLP(num_models * space_size, [100, 100], space_size).to(device)
 
     agent1 = REINFORCE(policy1, aggregate_loss="mean")
     agent2 = REINFORCE(policy2, gamma=0.5, aggregate_loss="sum")
@@ -174,21 +181,20 @@ def train_test(train_data, test_data, num_models, n_episodes=100):
 
 
 def main(args):
-    # dataset_name="mmlu_hf"
-    dataset_name="gsm8k"
     # m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
     #            'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',
     #              'Llama-2-70b-hf', 'Llama-2-7b-hf']
     m_names = "all"
-
-    datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
+    datacreator = DataCreator(args.task_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    train_test(train_data, test_data, num_models, n_episodes=50)
+    train_test(train_data, test_data, num_models, n_episodes=50, task_name=args.task_name)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
+    parser.add_argument("--task_name", type=str, default="mmlu_hf", choices=["gsm8k"])
     arguments = parser.parse_args()
     main(arguments)
