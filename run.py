@@ -115,7 +115,7 @@ def train_loop(train_env, n_episodes, select_args, ens_args, num_models, max_tol
 
 
 def train_test(train_data, test_data, num_models, n_episodes=100):
-    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints")
+    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", "gsm8k")
     dir_name = get_last_checkpoint_dirname(checkpoint_dir)
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
@@ -123,7 +123,7 @@ def train_test(train_data, test_data, num_models, n_episodes=100):
     train_env = EnsembleEnv(train_data, num_models, device=device, window_size=500)
     policy1 = PolicyNetwork(train_env.obsv_space_len, 
                             np.ones(train_env.ac_space_len).astype(int) * 2).to(device)
-    policy2 = MLP(num_models * 4, [100, 100], 4).to(device)
+    policy2 = MLP(num_models * 30, [100, 100], 30).to(device)
 
     agent1 = REINFORCE(policy1, aggregate_loss="mean")
     agent2 = REINFORCE(policy2, gamma=0.5, aggregate_loss="sum")
@@ -174,15 +174,17 @@ def train_test(train_data, test_data, num_models, n_episodes=100):
 
 
 def main(args):
-    dataset_name="mmlu_hf"
-    m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
-               'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',
-                 'Llama-2-70b-hf', 'Llama-2-7b-hf']
+    # dataset_name="mmlu_hf"
+    dataset_name="gsm8k"
+    # m_names = ['Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-v0.1', 
+    #            'gemma-2b', 'gemma-7b', 'Llama-2-13b-hf', 'phi-2',
+    #              'Llama-2-70b-hf', 'Llama-2-7b-hf']
+    m_names = "all"
 
     datacreator = DataCreator(dataset_name, model_names=m_names, task_type="lang")
     train_data, test_data, num_models = datacreator.create()
 
-    train_test(train_data, test_data, num_models, n_episodes=2)
+    train_test(train_data, test_data, num_models, n_episodes=50)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
