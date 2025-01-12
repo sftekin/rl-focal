@@ -80,6 +80,7 @@ class DataCreator:
         data_path = os.path.join(DATA_DIR, "lang_datasets", "gsm8k")
         model_names = self._get_model_names(data_path)
         num_models = len(model_names)
+        print(model_names)
 
         train_data = self._load_gsm8k_dataset(data_path, model_names, dataset_name="train")
         test_data = self._load_gsm8k_dataset(data_path, model_names, dataset_name="test")

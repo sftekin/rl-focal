@@ -1,10 +1,13 @@
 import os
+import sys
+
+sys.path.append("..")
+
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from config import RESULTS_DIR
 from run import load_arr
-
 
 
 plt.style.use('seaborn-v0_8')
@@ -36,7 +39,8 @@ def fix_arr(in_list):
 
 
 def main():
-    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints")
+    task_name = "gsm8k"
+    checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", task_name)
     select_agent_list = []
     ens_agent_list = []
     for file_dir in glob.glob(f"{checkpoint_dir}/*"):
@@ -48,6 +52,7 @@ def main():
 
     select_agent_arr = fix_arr(select_agent_list)
     ens_agent_arr = fix_arr(ens_agent_list)
+    print(ens_agent_arr)
 
     fig, ax = plt.subplots()
     line_names = ["Select Agent", "Ensemble Agent"]
@@ -56,15 +61,14 @@ def main():
         mu = np.nanmean(arr, axis=0)
         sigma = np.nanstd(arr, axis=0)
         x_axis = np.arange(len(mu))
-        ax.plot(x_axis, mu, color=colors[i], label=line_names[i])
-        ax.fill_between(x_axis, mu + 0.5 * sigma, mu - 0.5 * sigma, color=colors[i], alpha=0.3)
-    ax.set_ylim(25, 85)
+        ax.plot(x_axis, mu, color=colors[i], label=line_names[i], alpha=0.8)
+        ax.fill_between(x_axis, mu + sigma, mu - sigma, color=colors[i], alpha=0.3)
+    ax.set_ylim(15, 85)
     ax.legend(fontsize=16)
     ax.set_xlabel("Episode Number")
     ax.set_ylabel("Accuracy (%)")
-    ax.set_title("Agents Accuracy per Episode in MMLU")
-    plt.savefig("results/figures/reward_plot.png", dpi=200, bbox_inches="tight")
-
+    ax.set_title(f"Agents Accuracy per Episode in {task_name.upper()}")
+    plt.savefig(f"../results/figures/reward_plot_{task_name}.png", dpi=200, bbox_inches="tight")
 
 
 if __name__ == "__main__":
