@@ -195,6 +195,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
-    parser.add_argument("--task_name", type=str, default="mmlu_hf", choices=["gsm8k"])
+    parser.add_argument("--task_name", type=str, default="mmlu_hf", choices=["gsm8k", "mmlu_hf"])
     arguments = parser.parse_args()
     main(arguments)
