@@ -9,3 +9,5 @@ results/checkpoints/*
 
 results/figures/*
 !results/figures/.gitkeep
+
+sbatch_jobs/*.out
