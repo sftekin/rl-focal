@@ -1,24 +1,32 @@
 import os
+import sys
 import re
 import glob
+import tqdm
 import numpy as np
 import pandas as pd
+import pickle as pkl
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from config import DATA_DIR
+from data_generator.data_helper import load_bbh_data, bbh_ds_names
 
 
 class DataCreator:
     def __init__(self, dataset_name, task_type="lang", model_names="all"):
         if task_type not in ["lang", "vision"]:
             raise RuntimeError("task type is not understood.")
-        if task_type == "lang" and dataset_name not in ["gsm8k", "mmlu_hf", "search_qa", "xsum"]:
+        if task_type == "lang" and dataset_name not in ["gsm8k", "mmlu_hf", "bbh", "xsum"]:
             raise RuntimeError("input dataset can't found")
         elif task_type == "vision" and dataset_name not in ["miniimagenet", "cub", "fc100"]:
             raise RuntimeError("input dataset can't found")
 
         self.dataset_load_dict = {
             "mmlu_hf": self._load_mmlu_prob_and_label,
-            "gsm8k": self._load_gsm8k_prob_and_label
+            "gsm8k": self._load_gsm8k_prob_and_label,
+            "bbh": self._load_bbh_prob_and_label,
         }
 
         self.task_type = task_type
@@ -38,12 +46,15 @@ class DataCreator:
         return model_names
 
 
-    def create(self):
+    def load(self):
         if self.task_type == "lang":
-            train_data, test_data, num_models = self.dataset_load_dict[self.dataset_name]()
+            train_data_list, test_data_list, num_models, ds_names = self.dataset_load_dict[self.dataset_name]()
         if num_models == 0:
             raise RuntimeError
-        return train_data, test_data, num_models
+        
+        for train_d, test_d, ds_name in zip(train_data_list, test_data_list, ds_names):
+            yield train_d, test_d, num_models, ds_name
+
 
     def _load_mmlu_prob_and_label(self):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "mmlu_hf")
@@ -73,19 +84,18 @@ class DataCreator:
         train_data = data[:train_size]
         test_data = data[train_size:]
 
-        return train_data, test_data, num_models
+        return [train_data], [test_data], num_models, ["mmlu_hf"]
 
 
     def _load_gsm8k_prob_and_label(self):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "gsm8k")
         model_names = self._get_model_names(data_path)
         num_models = len(model_names)
-        print(model_names)
 
         train_data = self._load_gsm8k_dataset(data_path, model_names, dataset_name="train")
         test_data = self._load_gsm8k_dataset(data_path, model_names, dataset_name="test")
 
-        return train_data, test_data, num_models
+        return [train_data], [test_data], num_models, ["gsm8k"]
 
     def _load_gsm8k_dataset(self, data_path, model_names, num_samples=None,
                             num_runs=10, space_size=30, drop_non_exists=True, 
@@ -189,6 +199,57 @@ class DataCreator:
 
         return questions, labels
 
+    def _load_bbh_prob_and_label(self):
+        all_model_data = {
+            "meta-llama__Llama-2-70b-chat-hf": {},
+            "mistralai__Mixtral-8x7B-Instruct-v0.1" : {},
+            "google__gemma-7b": {},
+            "microsoft__phi-2": {},
+            "mistralai__Mistral-7B-v0.1": {},
+        }
+        model_names = list(all_model_data.keys())
+
+        temp_path = "bbh_data.pkl"
+        if os.path.exists(temp_path):
+            with open(temp_path, "rb") as f:
+                [train_data_list, test_data_list] = pkl.load(f)
+        else:
+            for mn in list(all_model_data.keys()):
+                for ds_name in tqdm.tqdm(bbh_ds_names):
+                    x, y = load_bbh_data(mn, ds_name)
+                    all_model_data[mn][ds_name] = {
+                        "data" : x,
+                        "label": y
+                    }
+            
+            train_data_list, test_data_list = [], []
+            for ds_name in tqdm.tqdm(bbh_ds_names):
+                all_x, all_y = [], []
+                for mn in all_model_data.keys():
+                    x, y = all_model_data[mn][ds_name].values()
+                    all_x.append(x)
+                    all_y.append(y)
+                all_x = np.concatenate(all_x, axis=1)
+
+                try:
+                    for y_idx in all_y:
+                        for i in range(len(y_idx)):
+                            assert(y_idx[i] == y[i])
+                except AssertionError as e:
+                    print(e)
+                    print(f"skipping ... {ds_name}")
+
+                concat_data = np.concatenate([all_x, y[:, None]], axis=1)
+
+                train_size = int(len(all_x) * 0.8)
+                train_data, test_data = concat_data[:train_size], concat_data[train_size:]
+                train_data_list.append(train_data)
+                test_data_list.append(test_data)
+
+            with open(temp_path, "wb") as f:
+                pkl.dump([train_data_list, test_data_list], f)
+
+        return train_data_list, test_data_list, len(model_names), bbh_ds_names
 
 
 
@@ -197,9 +258,8 @@ if __name__ == "__main__":
     #            "Mixtral-8x7B-v0.1", "gemma-7b", "Llama-2-70b-hf", 
     #            "Mistral-7B-Instruct-v0.2", "gemma-2b", "phi-2"]
     # f_data = load_mmlu_prob_and_label(m_names)
-    datacreator = DataCreator(dataset_name="gsm8k")
-    datacreator.create()
-
-    print(len(datacreator.data))
+    datacreator = DataCreator(dataset_name="mmlu_hf")
+    for train_data, test_data, num_models in datacreator.load():
+        print(train_data.shape, test_data.shape)
 
 

@@ -39,7 +39,7 @@ def fix_arr(in_list):
 
 
 def main():
-    task_name = "gsm8k"
+    task_name = "mmlu_hf"
     checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", task_name)
     select_agent_list = []
     ens_agent_list = []

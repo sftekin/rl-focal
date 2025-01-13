@@ -41,8 +41,8 @@ class EnsembleEnv(gym.Env):
 
         # create initial model pool randomly
         self.init_model_pool = np.random.randint(high=2, low=0, size=(num_models))
-        self.initial_step = self.window_size if window_size > 0 else int(len(data) * 0.1)
-        self.current_step = self.initial_step
+        self.initial_step = self.window_size if window_size > 0 else 0
+        self.current_step = self.initial_step + 1
         self.current_model_pool = self.init_model_pool
         self.total_len = len(data) - self.initial_step
 
@@ -84,7 +84,7 @@ class EnsembleEnv(gym.Env):
 
         if prediction_policy is None:            
             if sum(self.current_model_pool) < 2:
-                return 0, None
+                return -5, None
             ens_pred = voting(x[comb_idx][None, :], method="plurality")
             pred_probs = None
         else:
@@ -104,12 +104,13 @@ class EnsembleEnv(gym.Env):
         elif prediction_policy is not None:
             reward = -1
         else:
-            reward = -1 - (comb_idx.sum() / len(comb_idx))
+            # reward = -1 - (comb_idx.sum() / len(comb_idx))
+            reward = -1 
 
         return reward, pred_probs
 
     def reset(self):
-        self.current_step = self.initial_step
+        self.current_step = self.initial_step + 1
         # self.current_model_pool = np.random.randint(
         #     high=2, low=0, size=(self.num_models))
         self.current_model_pool = np.ones(self.num_models).astype(int)

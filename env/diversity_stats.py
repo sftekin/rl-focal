@@ -85,7 +85,11 @@ def calc_generalized_div(binary_preds):
         idx = i - 1
         p_1 += i * pi[idx] / model_size
         p_2 += i * (i - 1) * pi[idx] / (model_size * (model_size - 1))
-    gd = 1 - (p_2 / p_1)
+
+    if p_1 == 0:
+        gd = 1
+    else:
+        gd = 1 - (p_2 / p_1)
 
     return gd
 
