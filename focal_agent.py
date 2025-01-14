@@ -37,7 +37,7 @@ class MLP(nn.Module):
 class REINFORCE:
     def __init__(self, policy_network, lr=0.001, clip_epsilon=0.2, gamma=0.99, aggregate_loss="mean"):
         self.policy = policy_network
-        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr)
+        self.optimizer = optim.Adam(self.policy.parameters(), lr=lr, eps=1e-5)
         self.lr = lr
         self.gamma = gamma
         self.clip_epsilon = clip_epsilon
@@ -48,7 +48,7 @@ class REINFORCE:
 
     def update_policy_params(self, new_network):
         self.policy = new_network
-        self.optimizer = optim.Adam(new_network.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(new_network.parameters(), lr=self.lr, eps=1e-5)
         # Clear memory
         self.log_probs = []
         self.rewards = []

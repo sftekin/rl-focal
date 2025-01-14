@@ -11,3 +11,5 @@ results/figures/*
 !results/figures/.gitkeep
 
 sbatch_jobs/*.out
+
+*.pkl

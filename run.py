@@ -79,7 +79,10 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
                 select_agent.update_policy()
 
     total_acc = (episode_reward / count) * 100
-    print(f"Episode: {ep_count}, Total Acc: {total_acc:.2f}%, Action Counts: {action_count}")
+
+    if ep_count % 10 == 0:
+        print(f"Episode: {ep_count}, Total Acc: {total_acc:.2f}%, Action Counts: {action_count}")
+
     return total_acc
 
 
@@ -121,7 +124,7 @@ def train_test(train_data, test_data, num_models, args):
     policy2 = MLP(num_models * space_size, [100, 100], space_size).to(args.device)
 
     agent1 = REINFORCE(policy1, clip_epsilon=0.1, aggregate_loss="mean")
-    agent2 = REINFORCE(policy2, lr=0.001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
+    agent2 = REINFORCE(policy2, lr=0.0001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
 
     select_args = {
         "agent": agent1,
@@ -135,17 +138,17 @@ def train_test(train_data, test_data, num_models, args):
         "update": False
     }
 
-    # train select agent
+    # # train select agent
     select_agent_rw, select_args, ens_args = train_loop(train_env, args.sel_episodes, select_args,
                                                         ens_args, num_models, max_tolerance=args.max_tolerance,
-                                                        update_freq=10)
+                                                        update_freq=args.update_freq)
     
     # train ensemble agent
     select_args["update"] = False
     ens_args["update"] = True
     ens_agent_rw, select_args, ens_args = train_loop(train_env, args.ens_episodes, select_args,
                                                     ens_args, num_models, max_tolerance=args.max_tolerance,
-                                                    update_freq=10)
+                                                    update_freq=args.update_freq)
 
     select_agent_rw = np.array(select_agent_rw)
     ens_agent_rw = np.array(ens_agent_rw)
@@ -154,7 +157,7 @@ def train_test(train_data, test_data, num_models, args):
     ens_args["update"] = True
     select_args["update"] = True
     test_env = EnsembleEnv(test_data, num_models, device=args.device, window_size=0, space_size=space_size)
-    test_reward = step_policy(test_env, select_args, ens_args, num_models, ep_count=0, update_freq=10)
+    test_reward = step_policy(test_env, select_args, ens_args, num_models, ep_count=0, update_freq=args.update_freq)
 
     return select_agent_rw, ens_agent_rw, test_reward
 
@@ -165,6 +168,12 @@ def save_exp(select_agent_rw, ens_agent_rw, test_reward, task_name):
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
 
+    print(f"Test Acc: {test_reward:.2f}%")
+    score_path = os.path.join(dir_name, "test_score.txt")
+    with open(score_path, "w") as file:
+        file.write(f"Test Acc: {test_reward:.2f}%\n")
+    
+
     select_arr_path = os.path.join(dir_name, "train_select_agent_rewards.npy")
     save_arr(select_agent_rw, select_arr_path)
 
@@ -172,10 +181,6 @@ def save_exp(select_agent_rw, ens_agent_rw, test_reward, task_name):
     save_arr(ens_agent_rw, ens_arr_path)
 
     print("Data is saved...")
-    score_path = os.path.join(dir_name, "test_score.txt")
-    with open(score_path, "w") as file:
-        file.write(f"Test Acc: {test_reward:.2f}%\n")
-    print(f"Test Acc: {test_reward:.2f}%")
 
 
 def main(args):
@@ -202,10 +207,11 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
-    parser.add_argument("--task_name", type=str, default="bbh", choices=["gsm8k", "mmlu_hf", "bbh"])
+    parser.add_argument("--task_name", type=str, default="bbh", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
     parser.add_argument("--sel_episodes", type=int, default=25)
-    parser.add_argument("--ens_episodes", type=int, default=100)
+    parser.add_argument("--ens_episodes", type=int, default=150)
     parser.add_argument("--window_size", type=int, default=0)
-    parser.add_argument("--max_tolerance", type=int, default=100)  
+    parser.add_argument("--max_tolerance", type=int, default=150)
+    parser.add_argument("--update_freq", type=int, default=10)
     arguments = parser.parse_args()
     main(arguments)
