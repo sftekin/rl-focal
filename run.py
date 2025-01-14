@@ -54,7 +54,7 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
         action = [dist.sample() for dist in dists]
         log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
         action = np.array([a.detach().item() for a in action])
-        # action = np.array([0, 1, 0, 1, 0, 0, 1, 0])
+        # action = np.array([0, 1, 1, 1, 1])
         action_count += action
 
         if ens_update:
@@ -120,8 +120,8 @@ def train_test(train_data, test_data, num_models, args):
                             np.ones(train_env.ac_space_len).astype(int) * 2).to(args.device)
     policy2 = MLP(num_models * space_size, [100, 100], space_size).to(args.device)
 
-    agent1 = REINFORCE(policy1, aggregate_loss="mean")
-    agent2 = REINFORCE(policy2, gamma=0.5, aggregate_loss="sum")
+    agent1 = REINFORCE(policy1, clip_epsilon=0.1, aggregate_loss="mean")
+    agent2 = REINFORCE(policy2, lr=0.001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
 
     select_args = {
         "agent": agent1,
@@ -136,14 +136,14 @@ def train_test(train_data, test_data, num_models, args):
     }
 
     # train select agent
-    select_agent_rw, select_args, ens_args = train_loop(train_env, args.n_episodes // 2, select_args,
+    select_agent_rw, select_args, ens_args = train_loop(train_env, args.sel_episodes, select_args,
                                                         ens_args, num_models, max_tolerance=args.max_tolerance,
                                                         update_freq=10)
     
     # train ensemble agent
     select_args["update"] = False
     ens_args["update"] = True
-    ens_agent_rw, select_args, ens_args = train_loop(train_env, args.n_episodes // 2, select_args,
+    ens_agent_rw, select_args, ens_args = train_loop(train_env, args.ens_episodes, select_args,
                                                     ens_args, num_models, max_tolerance=args.max_tolerance,
                                                     update_freq=10)
 
@@ -203,7 +203,8 @@ if __name__ == "__main__":
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
     parser.add_argument("--task_name", type=str, default="bbh", choices=["gsm8k", "mmlu_hf", "bbh"])
-    parser.add_argument("--n_episodes", type=int, default=50)
+    parser.add_argument("--sel_episodes", type=int, default=25)
+    parser.add_argument("--ens_episodes", type=int, default=100)
     parser.add_argument("--window_size", type=int, default=0)
     parser.add_argument("--max_tolerance", type=int, default=100)  
     arguments = parser.parse_args()

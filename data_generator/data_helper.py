@@ -27,3 +27,12 @@ def load_bbh_data(model_name, ds_name):
     label_arr = np.array(labels_list).astype(int)
 
     return probs[idx], label_arr[idx]
+
+def norm_data(data):
+	# Calculate min and max values
+	min_val = np.min(data)
+	max_val = np.max(data)
+
+	# Normalize the array
+	normalized_data = (data - min_val) / (max_val - min_val)
+	return normalized_data

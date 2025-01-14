@@ -39,7 +39,7 @@ def fix_arr(in_list):
 
 
 def main():
-    task_name = "mmlu_hf"
+    task_name = "bbh"
     checkpoint_dir = os.path.join(RESULTS_DIR, "checkpoints", task_name)
     select_agent_list = []
     ens_agent_list = []
@@ -49,10 +49,11 @@ def main():
         if os.path.exists(select_agent_path):
             select_agent_list.append(load_arr(select_agent_path))
             ens_agent_list.append(load_arr(ens_agent_path))
+            print(select_agent_path, len(load_arr(ens_agent_path)))
 
     select_agent_arr = fix_arr(select_agent_list)
     ens_agent_arr = fix_arr(ens_agent_list)
-    print(ens_agent_arr)
+    # print(ens_agent_arr)
 
     fig, ax = plt.subplots()
     line_names = ["Select Agent", "Ensemble Agent"]

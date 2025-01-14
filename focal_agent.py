@@ -22,9 +22,9 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim[0]),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
             nn.Linear(hidden_dim[0], hidden_dim[1]),
-            nn.Sigmoid(),
+            # nn.Sigmoid(),
             nn.Linear(hidden_dim[1], output_dim)
         )
 
@@ -42,6 +42,7 @@ class REINFORCE:
         self.gamma = gamma
         self.clip_epsilon = clip_epsilon
         self.log_probs = []
+        self.old_probs = []
         self.rewards = []
         self.aggregate_loss = aggregate_loss
 
@@ -57,6 +58,11 @@ class REINFORCE:
         self.log_probs.append(log_prob)
         self.rewards.append(reward)
 
+    def store_old_policy(self):
+        for log_probs in self.log_probs:
+            temp = [log_prob.detach() for log_prob in log_probs]
+            self.old_probs.append(temp)
+
     def update_policy(self):
         # Calculate discounted rewards
         discounted_rewards = []
@@ -68,10 +74,13 @@ class REINFORCE:
         discounted_rewards = torch.tensor(discounted_rewards)
         advantages = (discounted_rewards - discounted_rewards.mean()) / (discounted_rewards.std() + 1e-9)
 
+        if len(self.old_probs) == 0:
+            self.store_old_policy()
+
         # Compute PPO loss with clipping
         policy_loss = []
-        for log_probs, advantage in zip(self.log_probs, advantages):
-            for log_prob in log_probs:
+        for log_probs, old_probs, advantage in zip(self.log_probs, self.old_probs, advantages):
+            for log_prob, old_prob in zip(log_probs, old_probs):
                 ratio = torch.exp(log_prob - log_prob.detach())
                 surr1 = ratio * advantage
                 surr2 = torch.clamp(ratio, 1 - self.clip_epsilon, 1 + self.clip_epsilon) * advantage
@@ -87,6 +96,9 @@ class REINFORCE:
             raise RuntimeError
         policy_loss.backward()
         self.optimizer.step()
+
+        # store old policies
+        self.store_old_policy()
 
         # Clear memory
         self.log_probs = []

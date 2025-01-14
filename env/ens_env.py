@@ -84,16 +84,17 @@ class EnsembleEnv(gym.Env):
 
         if prediction_policy is None:            
             if sum(self.current_model_pool) < 2:
-                return -5, None
+                return 0, None
             ens_pred = voting(x[comb_idx][None, :], method="plurality")
             pred_probs = None
         else:
             mask = np.repeat(comb_idx, self.space_size)
-            x = current_data["prob_arr"] * mask.astype(int)
+            x = np.exp(current_data["prob_arr"]) * mask.astype(int)
             x = torch.tensor(x, dtype=torch.float32).to(self.device)
             pred_probs = prediction_policy(x)
             # ens_pred = pred_probs.argmax().item()
             # pred_probs = pred_probs[ens_pred]
+            # ens_pred = current_data["prob_arr"][mask].argmax()
 
             m = torch.distributions.Categorical(pred_probs)
             ens_pred = m.sample()

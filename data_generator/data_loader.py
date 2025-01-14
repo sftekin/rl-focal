@@ -11,7 +11,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from config import DATA_DIR
-from data_generator.data_helper import load_bbh_data, bbh_ds_names
+from data_generator.data_helper import load_bbh_data, bbh_ds_names, norm_data
 
 
 class DataCreator:
@@ -218,7 +218,7 @@ class DataCreator:
                 for ds_name in tqdm.tqdm(bbh_ds_names):
                     x, y = load_bbh_data(mn, ds_name)
                     all_model_data[mn][ds_name] = {
-                        "data" : x,
+                        "data" : norm_data(x),
                         "label": y
                     }
             
@@ -258,8 +258,23 @@ if __name__ == "__main__":
     #            "Mixtral-8x7B-v0.1", "gemma-7b", "Llama-2-70b-hf", 
     #            "Mistral-7B-Instruct-v0.2", "gemma-2b", "phi-2"]
     # f_data = load_mmlu_prob_and_label(m_names)
-    datacreator = DataCreator(dataset_name="mmlu_hf")
-    for train_data, test_data, num_models in datacreator.load():
+    datacreator = DataCreator(dataset_name="bbh")
+    all_acc = []
+    for train_data, test_data, num_models, ds_name in datacreator.load():
         print(train_data.shape, test_data.shape)
+        space_size = (train_data.shape[1] - 1) // num_models
+
+        novel_data = test_data[:, :-1]
+        novel_label = test_data[:, -1]
+        acc = []
+        for i, novel_arr in enumerate(np.split(novel_data, num_models, axis=1)):
+            pred = novel_arr.argmax(axis=1)
+            acc.append(np.mean(novel_label == pred))
+        acc = np.array(acc)
+        all_acc.append(acc)
+        print(ds_name, acc)
+    print(np.mean(all_acc, axis=0))
+            
+
 
 
