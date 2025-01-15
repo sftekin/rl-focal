@@ -66,6 +66,7 @@ class DataCreator:
     def _load_mmlu_prob_and_label(self, **kwargs):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "mmlu_hf")
         model_names = self._get_model_names(data_path)
+        print(model_names)
 
         num_models = len(model_names)
         data_df_names = [os.path.basename(fname) for fname in
@@ -96,6 +97,7 @@ class DataCreator:
     def _load_gsm8k_prob_and_label(self, **kwargs):
         data_path = os.path.join(DATA_DIR, "lang_datasets", "gsm8k")
         model_names = self._get_model_names(data_path)
+        print(model_names)
         num_models = len(model_names)
 
         train_data = self._load_gsm8k_dataset(data_path, model_names, dataset_name="train")
@@ -266,7 +268,7 @@ if __name__ == "__main__":
     #            "Mixtral-8x7B-v0.1", "gemma-7b", "Llama-2-70b-hf", 
     #            "Mistral-7B-Instruct-v0.2", "gemma-2b", "phi-2"]
     # f_data = load_mmlu_prob_and_label(m_names)
-    datacreator = DataCreator(dataset_name="gpqa")
+    datacreator = DataCreator(dataset_name="mmlu_hf")
     all_acc = []
     for train_data, test_data, num_models, ds_name in datacreator.load():
         print(train_data.shape, test_data.shape)

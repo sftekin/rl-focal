@@ -22,9 +22,9 @@ class MLP(nn.Module):
         super(MLP, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim[0]),
-            # nn.Sigmoid(),
+            nn.Sigmoid(),
             nn.Linear(hidden_dim[0], hidden_dim[1]),
-            # nn.Sigmoid(),
+            nn.Sigmoid(),
             nn.Linear(hidden_dim[1], output_dim)
         )
 
