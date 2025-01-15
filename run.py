@@ -54,7 +54,7 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
         action = [dist.sample() for dist in dists]
         log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
         action = np.array([a.detach().item() for a in action])
-        # action = np.array([0, 1, 1, 1, 1])
+        # action = np.array([0, 0, 1, 1, 0, 1, 1])
         action_count += action
 
         if ens_update:
@@ -123,8 +123,8 @@ def train_test(train_data, test_data, num_models, args):
                             np.ones(train_env.ac_space_len).astype(int) * 2).to(args.device)
     policy2 = MLP(num_models * space_size, [100, 100], space_size).to(args.device)
 
-    agent1 = REINFORCE(policy1, clip_epsilon=0.1, aggregate_loss="mean")
-    agent2 = REINFORCE(policy2, lr=0.0001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
+    agent1 = REINFORCE(policy1, clip_epsilon=0.2, aggregate_loss="mean")
+    agent2 = REINFORCE(policy2, lr=0.001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
 
     select_args = {
         "agent": agent1,

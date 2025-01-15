@@ -8,9 +8,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from config import RESULTS_DIR
 from run import load_arr
+import seaborn as sns
+
+# Create a sample plot
+sns.set_style("whitegrid")
 
 
-# plt.style.use('seaborn-v0_8')
+plt.style.use('seaborn-v0_8')
 # Set global font size for all elements
 plt.rcParams.update({
     'font.size': 14,              # General font size
@@ -61,28 +65,35 @@ def main():
         
         mu = np.nanmean(select_agent_arr, axis=0)
         sigma = np.nanstd(select_agent_arr, axis=0)
-        x_axis = np.arange(len(mu))
-        ax[0].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2)
+        x_axis = np.arange(1, len(mu) + 1)
+        ax[0].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2, lw=3)
         ax[0].fill_between(x_axis, mu + sigma, mu - sigma, alpha=0.3, color=colors[i], zorder=2)
         ax[0].set_ylim(0, 85)
+        ax[0].set_xlim(1, 25)
+        ax[0].set_xticks(np.linspace(0, 25, 6).astype(int)[1:])
         # ax[0].legend(fontsize=16, bbox_to_anchor=(1.05, 1), loc='upper left')
         ax[0].set_xlabel("Episode Number")
         ax[0].set_ylabel("Accuracy (%)")
         ax[0].set_title(f"Select Agent Accuracy per Episode")
         ax[0].yaxis.grid(zorder=0)
+        ax[0].legend(ncols=3)
         # plt.show()
 
         mu = np.nanmean(ens_agent_arr, axis=0)
         sigma = np.nanstd(ens_agent_arr, axis=0)
-        x_axis = np.arange(len(mu))
-        ax[1].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2)
+        x_axis = np.arange(1, len(mu) + 1)
+        ax[1].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2, lw=3)
         ax[1].fill_between(x_axis, mu + sigma, mu - sigma, alpha=0.3, color=colors[i], zorder=2)
         ax[1].set_ylim(0, 85)
+        ax[1].set_xlim(1, 150)
+        ax[1].set_xticks(np.linspace(0, 150, 6).astype(int)[1:])
         ax[1].legend(fontsize=16, bbox_to_anchor=(1.05, 1), loc='upper left')
         ax[1].set_xlabel("Episode Number")
         ax[1].set_ylabel("Accuracy (%)")
         ax[1].set_title(f"Ensemble Agent Accuracy per Episode")
-        ax[1].yaxis.grid(zorder=0)
+        ax[1].grid(zorder=0)
+        ax[1].legend(ncols=3)
+        
     # plt.show()
 
     plt.savefig(f"../results/figures/reward_plot_side.png", dpi=200, bbox_inches="tight")

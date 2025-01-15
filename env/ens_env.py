@@ -106,8 +106,7 @@ class EnsembleEnv(gym.Env):
         elif prediction_policy is not None:
             reward = -1
         else:
-            # reward = -1 - (comb_idx.sum() / len(comb_idx))
-            reward = -1 
+            reward = -1 - (comb_idx.sum() / len(comb_idx))
 
         return reward, pred_probs
 
