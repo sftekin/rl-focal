@@ -159,7 +159,7 @@ class DataCreator:
         return train_data_list, test_data_list, len(model_names), sub_dir_names
 
     def _load_gsm8k_dataset(self, data_path, model_names, num_samples=None,
-                            num_runs=10, space_size=30, drop_non_exists=True, 
+                            num_runs=10, space_size=10, drop_non_exists=True, 
                             dataset_name="train"):
         # find number of samples for each model
         model_sample_count = []

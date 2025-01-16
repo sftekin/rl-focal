@@ -44,6 +44,7 @@ def fix_arr(in_list):
 
 def main():
     task_names = ["mmlu_hf", "gsm8k", "bbh", "gpqa", "musr"]
+    # task_names = ["gsm8k"]
     colors = [f"C{i}" for i in range(len(task_names))]
     fig, ax = plt.subplots(1, 2, figsize=(15, 5))
     for i, task_name in enumerate(task_names):
@@ -56,7 +57,7 @@ def main():
             if os.path.exists(select_agent_path):
                 select_agent_list.append(load_arr(select_agent_path))
                 ens_agent_list.append(load_arr(ens_agent_path))
-                print(select_agent_path, len(load_arr(ens_agent_path)))
+                print(select_agent_path, len(load_arr(select_agent_path)),  len(load_arr(ens_agent_path)))
 
         select_agent_arr = fix_arr(select_agent_list)
         ens_agent_arr = fix_arr(ens_agent_list)
@@ -69,7 +70,7 @@ def main():
         ax[0].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2, lw=3)
         ax[0].fill_between(x_axis, mu + sigma, mu - sigma, alpha=0.3, color=colors[i], zorder=2)
         ax[0].set_ylim(0, 85)
-        ax[0].set_xlim(1, 25)
+        ax[0].set_xlim(0, 26)
         ax[0].set_xticks(np.linspace(0, 25, 6).astype(int)[1:])
         # ax[0].legend(fontsize=16, bbox_to_anchor=(1.05, 1), loc='upper left')
         ax[0].set_xlabel("Episode Number")
@@ -85,7 +86,7 @@ def main():
         ax[1].plot(x_axis, mu, label=task_name.split("_")[0].upper(), alpha=0.8, color=colors[i], zorder=2, lw=3)
         ax[1].fill_between(x_axis, mu + sigma, mu - sigma, alpha=0.3, color=colors[i], zorder=2)
         ax[1].set_ylim(0, 85)
-        ax[1].set_xlim(1, 150)
+        ax[1].set_xlim(0, 151)
         ax[1].set_xticks(np.linspace(0, 150, 6).astype(int)[1:])
         ax[1].legend(fontsize=16, bbox_to_anchor=(1.05, 1), loc='upper left')
         ax[1].set_xlabel("Episode Number")

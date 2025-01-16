@@ -54,7 +54,7 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
         action = [dist.sample() for dist in dists]
         log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
         action = np.array([a.detach().item() for a in action])
-        # action = np.array([0, 0, 1, 1, 0, 1, 1])
+        # action = np.array([0, 1, 1, 1, 0, 1, 1])
         action_count += action
 
         if ens_update:
@@ -138,7 +138,7 @@ def train_test(train_data, test_data, num_models, args):
         "update": False
     }
 
-    # # train select agent
+    # train select agent
     select_agent_rw, select_args, ens_args = train_loop(train_env, args.sel_episodes, select_args,
                                                         ens_args, num_models, max_tolerance=args.max_tolerance,
                                                         update_freq=args.update_freq)
