@@ -10,16 +10,28 @@ from config import DATA_DIR
 
 
 class DataCreatorOE:
-    def __init__(self, model_names, max_num_samples=500):
-        self.max_num_samples = max_num_samples
+    def __init__(self, model_names):
         self.model_names = model_names
+        self.num_samples_for_each_task = {
+            "train": {
+                "helpfulness": 0,
+                "safety":0,
+                "truthfulness":0
+            },
+            "test": {
+                "helpfulness": 0,
+                "safety":0,
+                "truthfulness":0
+            }
+            
+        }
 
-    def create(self):
-        train_data = self._load_data_df(dataset_type="train")
-        test_data = self._load_data_df(dataset_type="test")
+    def create(self, train_num_samples=500, test_num_samples=500):
+        train_data = self._load_data_df(dataset_type="train", max_num_samples=train_num_samples)
+        test_data = self._load_data_df(dataset_type="test", max_num_samples=test_num_samples)
         return train_data, test_data
 
-    def _load_data_df(self, dataset_type="train"):
+    def _load_data_df(self, dataset_type="train", max_num_samples=500):
         data_path = os.path.join(DATA_DIR, "open_ended")
         
         data, prompts = [], []
@@ -40,10 +52,12 @@ class DataCreatorOE:
                     data_df = pd.read_csv(os.path.join(dir_path, "outputs_500.csv"))
                 else:
                     data_df = pd.read_csv(os.path.join(dir_path, "outputs_final.csv"))
-                questions = data_df["prompts"][:self.max_num_samples]
-                outputs.append(data_df["outputs"][:self.max_num_samples])
+                questions = data_df["prompts"][:max_num_samples]
+                outputs.append(data_df["outputs"][:max_num_samples])
             prompts.append(questions)
             data.append(pd.concat(outputs, axis=1))
+            self.num_samples_for_each_task[dataset_type][task_name] = len(questions)
+
         data = pd.concat(data)
         prompts = pd.concat(prompts)
         data = pd.concat([prompts, data], axis=1)

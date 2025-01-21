@@ -13,7 +13,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 os.environ['HF_HOME'] = "~/scratch/hf-cache"
 
 from config import openai_token, hf_token
-from safety_model.moderation import QAModeration
+from .safety_model.moderation import QAModeration
 
 
 class Evaluator:
@@ -42,10 +42,10 @@ class EvaluateHelpfulness(Evaluator):
         self.cur_dir = os.path.join(SCRIPT_DIR, "helpfulness_results")
 
 
-    def evaluate_sample(self, prompt, output, idx):
+    def evaluate_sample(self, prompt, output, idx, dataset="train"):
         if not self.is_preamble_called:
-            self.preamble_call_()
-        
+            self.preamble_call_(dataset)
+
         prompt = self.strip_instruct(prompt)
 
         output = output.replace("### Instruction", "").replace("\n", "").strip()
@@ -68,6 +68,7 @@ class EvaluateHelpfulness(Evaluator):
                       f"--reference_outputs {self.cur_dir}/reference_model.json --output_path {self.cur_dir}/out"
         print(command_txt)
         p = subprocess.Popen(command_txt, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        
         retval = p.wait()
         if retval==0:
             out_scores  = pd.read_csv(f"{self.cur_dir}/out/alpaca_eval_gpt4/leaderboard.csv")
@@ -77,13 +78,14 @@ class EvaluateHelpfulness(Evaluator):
         return int(acc)
 
         
-    def preamble_call_(self):
+    def preamble_call_(self, dataset):
         subprocess.run(["export", f"OPENAI_API_KEY={openai_token}"], shell=True)
         subprocess.run(["export", f"IS_ALPACA_EVAL_2=False"], shell=True)
         self.is_preamble_called = True
 
         print("loading reference model outputs")
-        ref_name = os.path.join(self.cur_dir, f"text_davinci_003_outputs.json")
+        enc_txt = "outputs" if dataset == "test" else "train"
+        ref_name = os.path.join(self.cur_dir, f"text_davinci_003_{enc_txt}.json")
         with open(ref_name, 'r') as json_file:
             self.ref_model_out_dict = json.load(json_file)
 
