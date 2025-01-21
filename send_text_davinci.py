@@ -24,7 +24,7 @@ def run():
         prompt = row["prompts"]
         # Send the request to the API
         response = openai.completions.create(
-            model="gpt-3.5-turbo-instruct",
+            model="davinci-002",
             prompt=prompt,
             temperature=0.7,
             max_tokens=500

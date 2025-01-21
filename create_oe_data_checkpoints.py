@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import tqdm
 
 from data_generator.data_oe_loader import DataCreatorOE
 from env.evaluator import (EvaluateHelpfulness, EvaluateSafety,
@@ -21,7 +22,7 @@ def create_checkpoints():
 
     for ds_name, data in zip(["train", "test"], [train_data, test_data]):
         scores = []
-        for i, row in data.iterrows():
+        for i, row in tqdm.tqdm(data.iterrows(), total=len(data)):
             row_arr = row.values
             prompt = row_arr[0]
             helpfulness_scores = [evalator_help.evaluate_sample(prompt, row_arr[j], i, ds_name) 
@@ -30,6 +31,7 @@ def create_checkpoints():
                              for j in range(1, 4)]
             truth_scores = [evalator_truth.evaluate_sample(prompt, row_arr[j]) 
                              for j in range(1, 4)]
+            print(helpfulness_scores)
             scores.append([helpfulness_scores, safety_scores, truth_scores])
         scores = np.array(scores)
         save_path = os.path.join(save_dir, f"{ds_name}_scores.npy")

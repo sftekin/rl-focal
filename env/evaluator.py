@@ -46,7 +46,7 @@ class EvaluateHelpfulness(Evaluator):
         if not self.is_preamble_called:
             self.preamble_call_(dataset)
 
-        prompt = self.strip_instruct(prompt)
+        prompt = self.strip_instruct(prompt).replace("\n\n### Response:", "")
 
         output = output.replace("### Instruction", "").replace("\n", "").strip()
         output = output.replace("###END", "")
@@ -68,8 +68,11 @@ class EvaluateHelpfulness(Evaluator):
                       f"--reference_outputs {self.cur_dir}/reference_model.json --output_path {self.cur_dir}/out"
         print(command_txt)
         p = subprocess.Popen(command_txt, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        
         retval = p.wait()
+
+        output, _ = p.communicate()  # Capture output
+        output = output.decode("utf-8")  # Decode from bytes to string
+
         if retval==0:
             out_scores  = pd.read_csv(f"{self.cur_dir}/out/alpaca_eval_gpt4/leaderboard.csv")
             acc = 100.00 == out_scores["win_rate"].values[0]
