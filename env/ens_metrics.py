@@ -10,7 +10,7 @@ def calc_div_acc(solution, hist_data):
     # select ensemble set
     set_bin_arr = hist_data["error_arr"][:, comb_idx]
     set_preds = hist_data["pred_arr"][:, comb_idx]
-    label_arr = hist_data["label_arr"]
+    # label_arr = hist_data["label_arr"]
 
     # calc focal diversity of ensemble
     focal_div = 0
@@ -23,10 +23,10 @@ def calc_div_acc(solution, hist_data):
     focal_div /= ens_size
 
     # calculate accuracy of ensemble
-    ens_pred = voting(set_preds, method="plurality")
-    ens_pred_flatten = ens_pred.flatten()
-    acc_score = np.mean(label_arr == ens_pred_flatten)
-
+    # ens_pred = voting(set_preds, method="plurality")
+    # ens_pred_flatten = ens_pred.flatten()
+    # acc_score = np.mean(label_arr == ens_pred_flatten)
+    acc_score = 0
     return focal_div, acc_score
 
 def fitness_function(solution, weights, hist_data, size_penalty=0):
