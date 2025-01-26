@@ -3,6 +3,7 @@ import tqdm
 import argparse
 import numpy as np
 import gym
+import matplotlib.pyplot as plt
 from env.ens_metrics import fitness_function
 from focal_agent import PolicyNetwork, MLP, REINFORCE
 
@@ -48,7 +49,7 @@ class EnsembleEnv(gym.Env):
         self.initial_step = self.window_size if window_size > 0 else 0
         self.current_step = self.initial_step + 1
         self.current_model_pool = self.init_model_pool
-        self.total_len = len(data) - self.initial_step
+        self.total_len = len(data) - self.current_step
 
         # set the initial states:
         self.current_state = self._get_observation()
@@ -70,7 +71,7 @@ class EnsembleEnv(gym.Env):
         start_idx = self.current_step - self.window_size if self.window_size > 0 else 0
         hist_data = self.hist_data[start_idx:self.current_step]
         # score = fitness_function(self.current_model_pool, [0.5, 0.5], hist_data)
-        prev_rewards = hist_data[self.current_step - 1]["pred_arr"]
+        prev_rewards = hist_data[-1]["pred_arr"]
         # observation = np.append(self.current_model_pool, score)
         observation = np.append(self.current_model_pool, prev_rewards)
         return observation
@@ -105,32 +106,36 @@ def step_policy(train_env, select_args, num_models, ep_count, update_freq):
 
     state = train_env.reset()
     action_count = np.zeros(num_models)
-    episode_reward = 0
+    actions_list = [] 
+    episode_rewards = []
     # for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
-    for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 3)):
+    for count in tqdm.tqdm(range(train_env.total_len - 1)):
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action_prob = select_policy(state)
         m = torch.distributions.Categorical(action_prob)
         action = m.sample()
         pred_prob = m.log_prob(action)
         action_count[action.item()] += 1
+        actions_list.append(action.item())
 
         next_state, reward = train_env.step(action.item())
 
         select_agent.store_outcome([pred_prob], reward)
 
         state = next_state
-        episode_reward += np.max([reward, 0])
+        episode_rewards.append(reward)
 
         if count % update_freq == 0 and count > 0:
             select_agent.update_policy()
 
-    total_acc = (episode_reward / count) * 100
-
+    helpful_score = np.mean(episode_rewards[:500], axis=0) * 100
+    safety_score = 100 - (np.mean(episode_rewards[500:1000], axis=0) * 100)
+    truthful_score = np.mean(episode_rewards[1000:], axis=0) * 100
     if ep_count % 5 == 0:
-        print(f"Episode: {ep_count}, Total Acc: {total_acc:.2f}%, Action Counts: {action_count}")
+        print(f"Episode: {ep_count}, Helpful: {helpful_score:.2f}%, \
+              Safety: {safety_score:.2f}, Truthful:{truthful_score:.2f}, Ac. Counts: {action_count}")
 
-    return total_acc
+    return helpful_score, actions_list
 
 
 def train_loop(train_env, n_episodes, select_args, num_models, max_tolerance=50, update_freq=10):
@@ -138,7 +143,7 @@ def train_loop(train_env, n_episodes, select_args, num_models, max_tolerance=50,
     agent_rw = []
     best_select_policy_dict = select_args["policy"].state_dict()
     for episode in range(n_episodes):
-        episode_reward = step_policy(train_env, select_args, num_models, ep_count=episode, update_freq=update_freq)
+        episode_reward, _ = step_policy(train_env, select_args, num_models, ep_count=episode, update_freq=update_freq)
         agent_rw.append(episode_reward)
 
         if best_reward < episode_reward:
@@ -168,18 +173,30 @@ def main(args):
     train_data, test_data = create_data()
     train_env = EnsembleEnv(train_data, num_models=num_models, device=args.device, window_size=args.window_size)
     policy = MLP(train_env.obsv_space_len, [100, 100], 3).to(args.device)
-    agent = REINFORCE(policy, clip_epsilon=0.2, aggregate_loss="mean")
+    agent = REINFORCE(policy, clip_epsilon=0.2, lr=0.0001, gamma=0.99, aggregate_loss="mean")
 
     select_args = {
         "agent": agent,
         "policy": policy,
-        "update": True
+        "update": True 
     }
 
     select_agent_rw, select_args = train_loop(train_env, args.sel_episodes, select_args,
                                             num_models, max_tolerance=args.max_tolerance,
                                                     update_freq=args.update_freq)
+    
+    print("testing...")
+    test_env = EnsembleEnv(test_data, num_models, device=args.device, window_size=0)
+    test_reward, action_list = step_policy(test_env, select_args, num_models, ep_count=0, update_freq=args.update_freq)
 
+    action_list = np.array(action_list)
+    fig, ax = plt.subplots()
+    x_axis = np.arange(len(action_list))
+    labels = ["helpfulness", "safety", "truthfulness"]
+    for i in range(3):
+        idx = action_list == i
+        ax.scatter(x_axis[idx], action_list[idx], label=labels[i])
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -192,6 +209,6 @@ if __name__ == "__main__":
     parser.add_argument("--ens_episodes", type=int, default=25)
     parser.add_argument("--window_size", type=int, default=-1)
     parser.add_argument("--max_tolerance", type=int, default=150)
-    parser.add_argument("--update_freq", type=int, default=1000)
+    parser.add_argument("--update_freq", type=int, default=10)
     arguments = parser.parse_args()
     main(arguments)
