@@ -28,8 +28,11 @@ def calc_div_acc(solution, hist_data):
     ens_pred_flatten = ens_pred.flatten()
     acc_score = np.mean(label_arr == ens_pred_flatten)
 
-    dats, cats = irr.aggregate_raters(set_preds)
-    fleiss_kappa = irr.fleiss_kappa(dats, method='fleiss')
+    if len(label_arr) < 2:
+        fleiss_kappa = 1
+    else:
+        dats, cats = irr.aggregate_raters(set_preds)
+        fleiss_kappa = irr.fleiss_kappa(dats, method='fleiss')
     return focal_div, acc_score, fleiss_kappa
 
 def fitness_function(solution, weights, hist_data, size_penalty=0):
