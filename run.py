@@ -4,6 +4,7 @@ import tqdm
 import torch
 import numpy as np
 import glob
+import time
 from plotting.plot import plot_actions, plot_rewards
 import matplotlib.pyplot as plt
 
@@ -46,8 +47,10 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
     state = train_env.reset()
     action_count = np.zeros(num_models)
     episode_reward = 0
+    average_time = 0
     # for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
     for count in tqdm.tqdm(range(train_env.total_len - train_env.window_size - 2)):
+        start_time = time.time()
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action_probs = select_policy(state)
         dists = [torch.distributions.Categorical(prob) for prob in action_probs]
@@ -77,11 +80,11 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
 
             if select_update:
                 select_agent.update_policy()
-
+        average_time += time.time() - start_time
     total_acc = (episode_reward / count) * 100
-
-    if ep_count % 5 == 0:
-        print(f"Episode: {ep_count}, Total Acc: {total_acc:.2f}%, Action Counts: {action_count}")
+    average_time /= count
+    if ep_count % 1 == 0:
+        print(f"Episode: {ep_count}, Total Acc: {total_acc:.2f}%, Action Counts: {action_count}, Avg Inf Time: {average_time:.4}s")
 
     return total_acc
 
@@ -118,7 +121,9 @@ def train_loop(train_env, n_episodes, select_args, ens_args, num_models, max_tol
 
 def train_test(train_data, test_data, num_models, args):
     space_size = (train_data.shape[1] - 1) // num_models
-    train_env = EnsembleEnv(train_data, num_models, device=args.device, window_size=args.window_size, space_size=space_size)
+    train_env = EnsembleEnv(train_data, num_models, device=args.device,
+                             window_size=args.window_size, space_size=space_size,
+                             task_name=args.task_name, alpha=args.alpha)
     policy1 = PolicyNetwork(train_env.obsv_space_len, 
                             np.ones(train_env.ac_space_len).astype(int) * 2).to(args.device)
     policy2 = MLP(num_models * space_size, [100, 100], space_size).to(args.device)
@@ -207,11 +212,12 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
-    parser.add_argument("--task_name", type=str, default="mmlu_hf", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
-    parser.add_argument("--sel_episodes", type=int, default=25)
+    parser.add_argument("--task_name", type=str, default="gsm8k", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
+    parser.add_argument("--alpha", type=float, default=1)
+    parser.add_argument("--sel_episodes", type=int, default=10)
     parser.add_argument("--ens_episodes", type=int, default=25)
     parser.add_argument("--window_size", type=int, default=500)
     parser.add_argument("--max_tolerance", type=int, default=150)
-    parser.add_argument("--update_freq", type=int, default=1000)
+    parser.add_argument("--update_freq", type=int, default=100)
     arguments = parser.parse_args()
     main(arguments)

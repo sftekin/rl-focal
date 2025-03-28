@@ -4,7 +4,7 @@ import gym
 from gym import spaces
 
 from env.ens_methods import voting
-from env.ens_metrics import fitness_function
+from env.ens_metrics import fitness_function, calc_div_acc
 
 class HistData:
     def __init__(self, data_dict):
@@ -26,14 +26,15 @@ class HistData:
 
 
 class EnsembleEnv(gym.Env):
-    def __init__(self, data, num_models, window_size=-1, device="cuda", space_size=4):
+    def __init__(self, data, num_models, window_size=-1, device="cuda", space_size=4, task_name="", alpha=1):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
         self.window_size = window_size
         self.device = device
         self.space_size = space_size
-
+        self.task_name = task_name
+        self.alpha = alpha
         assert self.window_size < len(self.data)
 
         # parse the data
@@ -72,7 +73,7 @@ class EnsembleEnv(gym.Env):
     def _get_observation(self):
         start_idx = self.current_step - self.window_size if self.window_size > 0 else 0
         hist_data = self.hist_data[start_idx:self.current_step]
-        score = fitness_function(self.current_model_pool, [0.5, 0.5], hist_data)
+        score = fitness_function(self.current_model_pool, [0, 0., 1.], hist_data)
         observation = np.append(self.current_model_pool, score)
         observation = np.append(observation, self.current_model_pool.sum())
         return observation
@@ -106,7 +107,7 @@ class EnsembleEnv(gym.Env):
         elif prediction_policy is not None:
             reward = -1
         else:
-            reward = -1 - (comb_idx.sum() / len(comb_idx))
+            reward = -1 - ((comb_idx.sum() / len(comb_idx)) * self.alpha)
 
         return reward, pred_probs
 
