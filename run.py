@@ -235,6 +235,8 @@ def main(args):
 
     save_exp(select_agent_rewards, ens_agent_rewards, test_rewards, args.task_name)
 
+    return test_rewards
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
