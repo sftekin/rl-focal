@@ -1,6 +1,6 @@
 # Multi-Agent Reinforcement Learning with Focal-Diversity Optimization
 
-![alt text](./main.png)
+![alt text](./main.jpg)
 
 ## Install
 
