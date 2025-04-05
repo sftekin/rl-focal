@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import itertools
 
 
 def pairwise_stat(fir_arr, sec_arr):
@@ -44,8 +45,24 @@ def calc_stat(fir_arr, sec_arr, stat_method):
     stat_val = stat_method(*all_stat)
     return stat_val
 
+def calc_binary_entropy(arr):
+    # Count occurrences of 0s and 1s
+    unique, counts = np.unique(arr, return_counts=True)
+    probs = counts / counts.sum()  # Convert counts to probabilities
+    
+    # Compute entropy
+    entropy = -np.sum(probs * np.log2(probs), where=(probs > 0))  # Avoid log(0)
+    
+    return entropy
+
 
 def calc_stat_matrices(errors):
+    """
+    errors : {
+        "llama": np.array([0, 1, 0, 0, 1, ...])
+        "mistral": np.array([0, 0, 0, 1, 1, ...])
+    }
+    """
     stat_dict = {
         "q_statistics": q_stat,
         "correlation_co-efficiency": ro_corr,
@@ -64,6 +81,15 @@ def calc_stat_matrices(errors):
         stat_df = pd.DataFrame(stat_arr, columns=model_names, index=model_names)
         stat_matrices[stat_name] = stat_df
     return stat_matrices
+
+
+def calc_pairwise_arr(stat_df, comb, stat_name):
+    stat_arr = stat_df[stat_name].values
+    val = 0
+    for i, pair in enumerate(list(itertools.combinations(comb, 2))):
+        val += stat_arr[pair]
+    val = val / (i + 1)
+    return val
 
 
 def calc_generalized_div(binary_preds):

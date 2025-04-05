@@ -53,11 +53,14 @@ def step_policy(train_env, select_args, ens_args, num_models, ep_count, update_f
         start_time = time.time()
         state = torch.tensor(state, dtype=torch.float32).to(device)
         action_probs = select_policy(state)
-        dists = [torch.distributions.Categorical(prob) for prob in action_probs]
+        try:
+            dists = [torch.distributions.Categorical(prob) for prob in action_probs]
+        except ValueError as e:
+            print(e)
+            continue
         action = [dist.sample() for dist in dists]
         log_probs = [dist.log_prob(action) for dist, action in zip(dists, action)]
         action = np.array([a.detach().item() for a in action])
-        # action = np.array([0, 1, 1, 1, 0, 1, 1])
         action_count += action
 
         if ens_update:
@@ -121,15 +124,42 @@ def train_loop(train_env, n_episodes, select_args, ens_args, num_models, max_tol
 
 def train_test(train_data, test_data, num_models, args):
     space_size = (train_data.shape[1] - 1) // num_models
-    train_env = EnsembleEnv(train_data, num_models, device=args.device,
-                             window_size=args.window_size, space_size=space_size,
-                             task_name=args.task_name, alpha=args.alpha)
-    policy1 = PolicyNetwork(train_env.obsv_space_len, 
-                            np.ones(train_env.ac_space_len).astype(int) * 2).to(args.device)
-    policy2 = MLP(num_models * space_size, [100, 100], space_size).to(args.device)
+    div_metric_weights = np.array([
+        args.focal_div_weight,
+        args.plurality_voting_weight,
+        args.fleiss_kappa_weight,
+        args.q_stats_weight,
+        args.corr_coef_weight,
+        args.binary_disagreement_weight,
+        args.kappa_stats_weight,
+        args.binary_entropy_weight])
+    train_env = EnsembleEnv(data=train_data, 
+                            num_models=num_models,
+                            div_metric_weights=div_metric_weights,
+                            device=args.device,
+                            window_size=args.window_size, 
+                            space_size=space_size,
+                            task_name=args.task_name, 
+                            alpha=args.alpha)
 
-    agent1 = REINFORCE(policy1, clip_epsilon=0.2, aggregate_loss="mean")
-    agent2 = REINFORCE(policy2, lr=0.001, clip_epsilon=0.2, gamma=0.5, aggregate_loss="sum")
+    policy1 = PolicyNetwork(input_dim=train_env.obsv_space_len, 
+                            action_dims=np.ones(train_env.ac_space_len).astype(int) * 2)
+    policy2 = MLP(input_dim=num_models * space_size, 
+                  hidden_dim=[100, 100], 
+                  output_dim=space_size)
+    policy1 = policy1.to(args.device)
+    policy2 = policy2.to(args.device)
+
+    agent1 = REINFORCE(policy_network=policy1,
+                       lr=args.select_agent_lr,
+                       clip_epsilon=args.select_agent_clip_epsilon,
+                       gamma=args.select_agent_gamma,
+                       aggregate_loss="mean")
+    agent2 = REINFORCE(policy2,
+                       lr=args.ens_agent_lr,
+                       clip_epsilon=args.ens_agent_clip_epsilon,
+                       gamma=args.ens_agent_gamma,
+                       aggregate_loss="sum")
 
     select_args = {
         "agent": agent1,
@@ -144,25 +174,24 @@ def train_test(train_data, test_data, num_models, args):
     }
 
     # train select agent
-    select_agent_rw, select_args, ens_args = train_loop(train_env, args.sel_episodes, select_args,
+    select_agent_rw, select_args, ens_args = train_loop(train_env, args.select_agent_epoch, select_args,
                                                         ens_args, num_models, max_tolerance=args.max_tolerance,
                                                         update_freq=args.update_freq)
-    
+
     # train ensemble agent
     select_args["update"] = False
     ens_args["update"] = True
-    ens_agent_rw, select_args, ens_args = train_loop(train_env, args.ens_episodes, select_args,
+    ens_agent_rw, select_args, ens_args = train_loop(train_env, args.ensemble_agent_epoch, select_args,
                                                     ens_args, num_models, max_tolerance=args.max_tolerance,
                                                     update_freq=args.update_freq)
-
-    select_agent_rw = np.array(select_agent_rw)
-    ens_agent_rw = np.array(ens_agent_rw)
 
     print("Starting testing")
     ens_args["update"] = True
     select_args["update"] = True
     test_env = EnsembleEnv(test_data, num_models, device=args.device, window_size=0, space_size=space_size)
     test_reward = step_policy(test_env, select_args, ens_args, num_models, ep_count=0, update_freq=args.update_freq)
+    select_agent_rw = np.array(select_agent_rw)
+    ens_agent_rw = np.array(ens_agent_rw)
 
     return select_agent_rw, ens_agent_rw, test_reward
 
@@ -209,13 +238,34 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='train and test script for the rl-focal')
+    # experiment arguments
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
     parser.add_argument("--task_name", type=str, default="gsm8k", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
-    parser.add_argument("--alpha", type=float, default=1)
-    parser.add_argument("--sel_episodes", type=int, default=10)
-    parser.add_argument("--ens_episodes", type=int, default=25)
+
+    # select agent arguments
+    parser.add_argument("--alpha", type=float, default=1.0, help="size penalty constant")
+    parser.add_argument("--select_agent_epoch", type=int, default=10)
+    parser.add_argument("--select_agent_gamma", type=float, default=0.99)
+    parser.add_argument("--select_agent_clip_epsilon", type=float, default=0.2)
+    parser.add_argument("--select_agent_lr", type=float, default=0.001)
+    parser.add_argument("--focal_div_weight", type=float, default=0.5)
+    parser.add_argument("--plurality_voting_weight", type=float, default=0.5)
+    parser.add_argument("--fleiss_kappa_weight", type=float, default=0)
+    parser.add_argument("--q_stats_weight", type=float, default=0)
+    parser.add_argument("--corr_coef_weight", type=float, default=0)
+    parser.add_argument("--binary_disagreement_weight", type=float, default=0)
+    parser.add_argument("--kappa_stats_weight", type=float, default=0)
+    parser.add_argument("--binary_entropy_weight", type=float, default=0)
+
+    # ensemble agent arguments
+    parser.add_argument("--ensemble_agent_epoch", type=int, default=10)
+    parser.add_argument("--ens_agent_gamma", type=float, default=0.5)
+    parser.add_argument("--ens_agent_clip_epsilon", type=float, default=0.2)
+    parser.add_argument("--ens_agent_lr", type=float, default=0.001)
+
+    # common argumentss for both agents
     parser.add_argument("--window_size", type=int, default=500)
     parser.add_argument("--max_tolerance", type=int, default=150)
     parser.add_argument("--update_freq", type=int, default=100)

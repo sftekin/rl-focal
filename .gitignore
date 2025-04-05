@@ -17,3 +17,5 @@ sbatch_jobs/*.out
 env/helpfulness_results/out/*
 env/helpfulness_results/temp.json
 env/helpfulness_results/reference_model.json
+
+.vscode/*

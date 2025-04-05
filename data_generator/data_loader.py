@@ -64,7 +64,7 @@ class DataCreator:
 
 
     def _load_mmlu_prob_and_label(self, **kwargs):
-        data_path = os.path.join(DATA_DIR, "lang_datasets", "mmlu_hf")
+        data_path = os.path.join(DATA_DIR, "mmlu_hf")
         model_names = self._get_model_names(data_path)
         print(model_names)
 
@@ -95,7 +95,7 @@ class DataCreator:
         return [train_data], [test_data], num_models, ["mmlu_hf"]
 
     def _load_gsm8k_prob_and_label(self, **kwargs):
-        data_path = os.path.join(DATA_DIR, "lang_datasets", "gsm8k")
+        data_path = os.path.join(DATA_DIR, "gsm8k")
         model_names = self._get_model_names(data_path)
         print(model_names)
         num_models = len(model_names)
@@ -248,7 +248,7 @@ class DataCreator:
         return data
 
     def load_gsm8k_raw_data(self, dataset_name):
-        data_path = os.path.join(DATA_DIR, "lang_datasets", "gsm8k", f"{dataset_name}.jsonl")
+        data_path = os.path.join(DATA_DIR, "gsm8k", f"{dataset_name}.jsonl")
         data_df = pd.read_json(data_path, lines=True)
 
         questions, labels = [], []
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     #            "Mixtral-8x7B-v0.1", "gemma-7b", "Llama-2-70b-hf", 
     #            "Mistral-7B-Instruct-v0.2", "gemma-2b", "phi-2"]
     # f_data = load_mmlu_prob_and_label(m_names)
-    datacreator = DataCreator(dataset_name="mmlu_hf")
+    datacreator = DataCreator(dataset_name="musr")
     all_acc = []
     for train_data, test_data, num_models, ds_name in datacreator.load():
         print(train_data.shape, test_data.shape)

@@ -26,7 +26,8 @@ class HistData:
 
 
 class EnsembleEnv(gym.Env):
-    def __init__(self, data, num_models, window_size=-1, device="cuda", space_size=4, task_name="", alpha=1):
+    def __init__(self, data, num_models, div_metric_weights=None, window_size=-1,
+                  device="cuda", space_size=4, task_name="", alpha=1):
         super(EnsembleEnv, self).__init__()
         self.data = data  # Historical model performances
         self.num_models = num_models
@@ -36,6 +37,11 @@ class EnsembleEnv(gym.Env):
         self.task_name = task_name
         self.alpha = alpha
         assert self.window_size < len(self.data)
+
+        if div_metric_weights is None:
+            self.div_metric_weights = np.array([0.5, 0.5, 0, 0, 0, 0, 0, 0])
+        else:
+            self.div_metric_weights = div_metric_weights
 
         # parse the data
         self.hist_data = self._parse_data()
@@ -73,8 +79,13 @@ class EnsembleEnv(gym.Env):
     def _get_observation(self):
         start_idx = self.current_step - self.window_size if self.window_size > 0 else 0
         hist_data = self.hist_data[start_idx:self.current_step]
-        score = fitness_function(self.current_model_pool, [0, 0., 1.], hist_data)
-        observation = np.append(self.current_model_pool, score)
+        div_score = fitness_function(
+            solution=self.current_model_pool,
+            weights=self.div_metric_weights,
+            hist_data=hist_data)
+        if np.isnan(div_score):
+            div_score = 0
+        observation = np.append(self.current_model_pool, div_score)
         observation = np.append(observation, self.current_model_pool.sum())
         return observation
 
@@ -96,11 +107,6 @@ class EnsembleEnv(gym.Env):
             pred_probs = prediction_policy(x)
             ens_pred = pred_probs.argmax().item()
             pred_probs = pred_probs[ens_pred]
-            # ens_pred = current_data["prob_arr"][mask].argmax()
-
-            # m = torch.distributions.Categorical(pred_probs)
-            # ens_pred = m.sample()
-            # pred_probs = m.log_prob(ens_pred)
 
         if y == ens_pred:
             reward = 1
