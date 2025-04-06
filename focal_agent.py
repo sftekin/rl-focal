@@ -27,11 +27,19 @@ class MLP(nn.Module):
             nn.Sigmoid(),
             nn.Linear(hidden_dim[1], output_dim)
         )
+        self.net.apply(self.init_weights)
 
     def forward(self, x):
         out = self.net(x)
         out = torch.softmax(out, dim=-1)
         return out
+
+    @staticmethod
+    def init_weights(m):
+        if isinstance(m, nn.Linear):
+            torch.nn.init.xavier_uniform(m.weight)
+            m.bias.data.fill_(0.01)
+
 
 
 class REINFORCE:
