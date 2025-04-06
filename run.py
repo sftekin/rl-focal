@@ -244,11 +244,11 @@ if __name__ == "__main__":
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--model_names", type=str, default="all")
     parser.add_argument("--dataset_type", type=str, default="lang", choices=["lang", "vision"])
-    parser.add_argument("--task_name", type=str, default="gsm8k", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
+    parser.add_argument("--task_name", type=str, default="mmlu_hf", choices=["gsm8k", "mmlu_hf", "bbh", "gpqa", "musr"])
 
     # select agent arguments
     parser.add_argument("--alpha", type=float, default=1.0, help="size penalty constant")
-    parser.add_argument("--select_agent_epoch", type=int, default=10)
+    parser.add_argument("--select_agent_epoch", type=int, default=15)
     parser.add_argument("--select_agent_gamma", type=float, default=0.99)
     parser.add_argument("--select_agent_clip_epsilon", type=float, default=0.2)
     parser.add_argument("--select_agent_lr", type=float, default=0.001)
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     parser.add_argument("--binary_entropy_weight", type=float, default=0)
 
     # ensemble agent arguments
-    parser.add_argument("--ensemble_agent_epoch", type=int, default=10)
+    parser.add_argument("--ensemble_agent_epoch", type=int, default=15)
     parser.add_argument("--ens_agent_gamma", type=float, default=0.5)
     parser.add_argument("--ens_agent_clip_epsilon", type=float, default=0.2)
     parser.add_argument("--ens_agent_lr", type=float, default=0.001)
