@@ -17,7 +17,7 @@ The inference on MMLU and GSM8k datasets by the following models can be download
 ```
 
 ```
-https://drive.google.com/file/d/1WqHfBYrJ3DQSRTtRZDRFkckB3WDa1sBT/view?usp=sharing
+https://drive.google.com/file/d/10p4Wh50ZCDnoocB5a3XsJivYLJ6uvF6w/view?usp=sharing
 ```
 
 
