@@ -5,9 +5,9 @@ plt.rcParams.update({
         'font.size': 14,              # General font size
         'axes.titlesize': 16,         # Title font size
         'axes.labelsize': 16,         # Axis label font size
-        'xtick.labelsize': 12,        # X-axis tick font size
-        'ytick.labelsize': 12,        # Y-axis tick font size
-        'legend.fontsize': 12         # Legend font size
+        'xtick.labelsize': 16,        # X-axis tick font size
+        'ytick.labelsize': 16,        # Y-axis tick font size
+        'legend.fontsize': 16         # Legend font size
     })
 
 
@@ -41,19 +41,36 @@ def plot_compare_greedy():
     x_axis = np.arange(2, 7)
     random_select = np.array([71.92, 72.41, 68.70, 66.13, 62.34])
     latest_select = np.array([72.27, 72.56, 64.28, 63.40, 54.46])
-    marl_focal = np.array([74.52, 73.87, 76.65, 74.19, 73.06])
+    species = ("Dynamic", "top-2", "top-3", "top-4", "top-5", "top-6")
+    # marl_focal = np.array([74.52, 73.87, 76.65, 74.19, 73.06])
+    
+    data_dict = {
+        "random select": random_select,
+        "latest select": latest_select
+    }
     
     fig, ax = plt.subplots()
-    ax.plot(x_axis, random_select, "-->", markersize=15, label="Random Select", lw=3, zorder=3, color="red")
-    ax.plot(x_axis, latest_select, "--*", markersize=15, label="Choose Latest Correct", lw=3, zorder=3, color="salmon")
-    ax.plot(x_axis, marl_focal, "--^", markersize=15, label="MARL-Focal Size Constrainted", lw=3, zorder=3, color="darkred")
-    ax.legend()
+    x_axis = np.arange(len(random_select)+1)
+    width = 0.25  # the width of the bars
+    multiplier = 0
+    
+    ax.bar(0.25, 76.06, width, label="MARL-Focal", color="r", zorder=3)
+    
+    for attribute, measurement in data_dict.items():
+        offset = width * multiplier
+        rects = ax.bar(x_axis[1:] + offset, measurement, width, label=attribute, zorder=3)
+        # ax.bar_label(rects, padding=3)
+        multiplier += 1
+    ax.set_xticks(x_axis + width/2, species)
+    ax.legend(loc='upper right', ncols=1)
+    ax.set_ylim(50, 80)
     ax.grid(zorder=0)
-    ax.set_xticks(x_axis)
+    # ax.set_xticks(x_axis)
     ax.set_ylabel("Acc (%) \u2191")
     ax.set_xlabel("Top-k Models Performed in Train Data (k)")
     ax.set_title("Marl-Focal vs. The Greedy Approaches")
     plt.savefig("results/figures/compare_greedy.png", bbox_inches="tight", dpi=150)
+    # plt.show()
 
 def plot_scalibility():
     np.random.seed(42)
@@ -92,41 +109,55 @@ def plot_metric_comparison():
     marl_names = ["No-Metric", "All",  "Q-Stat", "Kappa", "Entropy", "Focal"]
     x_axis = np.arange(len(cost))*1.5
     fig, ax = plt.subplots(1, 2,figsize=(10, 5))
-    ax[0].bar(x_axis[:-1], acc[:-1], color="darkblue", zorder=3)
-    ax[0].bar(x_axis[-1], acc[-1], color="red", zorder=3)
+    rects = ax[0].bar(x_axis[:-1], acc[:-1], color="darkblue", zorder=3)
+    ax[0].bar_label(rects, labels=marl_names[:-1], padding=3, rotation=90, fontsize=16)
+    rects = ax[0].bar(x_axis[-1], acc[-1], color="tab:green", zorder=3)
+    ax[0].bar_label(rects, labels=[marl_names[-1]], padding=3, rotation=90, fontsize=16)
     ax[0].set_ylim(70, 80)
-    ax[0].set_xticks(x_axis)
-    ax[0].set_xticklabels(marl_names)
+    ax[0].set_xticks([])
     ax[0].yaxis.grid(zorder=0)
     ax[0].set_title("Acc (%) \u2191")
     
-    ax[1].bar(x_axis[:-1], cost[:-1], color="darkblue", zorder=3)
-    ax[1].bar(x_axis[-1], cost[-1], color="red", zorder=3)
+    rects = ax[1].bar(x_axis[:-1], cost[:-1], color="darkblue", zorder=3)
+    ax[1].bar_label(rects, labels=marl_names[:-1], padding=3, rotation=90, fontsize=16)
+    rects = ax[1].bar(x_axis[-1], cost[-1], color="tab:green", zorder=3)
+    ax[1].bar_label(rects, labels=[marl_names[-1]], padding=3, rotation=90, fontsize=16)
     ax[1].set_ylim(400, 1800)
-    ax[1].set_xticks(x_axis)
-    ax[1].set_xticklabels(marl_names)
+    ax[1].set_xticks([])
     ax[1].yaxis.grid(zorder=0)
     ax[1].set_title("Cost (\u00A2) \u2193")
     plt.savefig("results/figures/metrics.png", bbox_inches="tight", dpi=150)
 
 def plot_mmlu():
     acc = np.array([53.40, 68.53, 41.79, 77.29, 59.67, 76.36, 70.42, 75.01, 71.24, 40.26, 63.87, 55.82, 77.98])
-    models = np.array(["Llama-2-13b-hf", "Llama-2-70b-hf", "Llama-2-7b-hf", "Meta-Llama-3-70B", "Mistral-7B-v0.2", "Mixtral-8x22B-v0.1", "Mixtral-8x7B-v0.1", "Qwen-72B", "deepseek-llm-67b", "gemma-2b", "gemma-7b", "phi-2", "MARL-Focal"])
+    models = np.array(["Llama-2-13b", "Llama-2-70b", "Llama-2-7b", "Meta-Llama-3-70B", "Mistral-7B", "Mixtral-8x22B", "Mixtral-8x7B", "Qwen-72B", "deepseek-llm-67b", "gemma-2b", "gemma-7b", "phi-2", "MARL-Focal"])
     idx = np.argsort(acc)
     print(idx)
     
     acc = acc[idx]
     models = models[idx]
-    colors = plt.cm.BuPu(np.linspace(0.1, 1, len(models)))
-    fig, ax = plt.subplots()
+    colors = plt.cm.Blues(np.linspace(0.1, 1, len(models)))
+    fig, ax = plt.subplots(1, 2, figsize=(10, 6.5))
     for i, (model_name, score) in enumerate(zip(models, acc)):
-        ax.bar(i, score, label=model_name, zorder=3, color=colors[i])
-    ax.legend(ncols=1, loc='center left', bbox_to_anchor=(1, 0.5))
-    ax.set_ylim(35, 80)
-    ax.set_xticks([])
-    ax.set_ylabel("Acc (%)")
-    ax.yaxis.grid(zorder=0)
-    ax.set_title("Reaching SOTA Performance in MMLU")
+        if score < 65:
+            ax[0].bar(i, score, label=model_name, zorder=3, color=colors[i])
+        elif model_name == "MARL-Focal":
+            ax[1].bar(i, score, label=model_name, zorder=3, color="tab:green")
+        else:
+            ax[1].bar(i, score, label=model_name, zorder=3, color=colors[i])
+            
+    # ax[0].legend(ncols=1, loc='center left', bbox_to_anchor=(1, 0.5))
+    ax[0].legend(ncols=1, loc='lower left', bbox_to_anchor=(2.2, 0.5))
+    ax[0].set_ylim(35, 80)
+    ax[0].set_xticks([])
+    ax[0].set_ylabel("Acc (%)")
+    ax[0].yaxis.grid(zorder=0)
+    
+    ax[1].set_ylim(65, 80)
+    ax[1].set_xticks([])
+    ax[1].yaxis.grid(zorder=0)
+    ax[1].legend(ncols=1, loc='upper left', bbox_to_anchor=(1, 0.5))
+    plt.suptitle("Reaching SOTA Performance in MMLU")
     plt.savefig("results/figures/mmlu.png", bbox_inches="tight", dpi=150)
 
 
@@ -145,17 +176,36 @@ def plot_hyper_params():
     ax[1].set_xlabel(r"Size Penalty $\alpha$")
     ax[1].grid(zorder=0)
     plt.savefig("results/figures/alpha.png", bbox_inches="tight", dpi=150)
+
+
+def plot_greedy_line():
+    x_axis = np.arange(2, 7)
+    random_select = np.array([71.92, 72.41, 68.70, 66.13, 62.34])
+    latest_select = np.array([72.27, 72.56, 64.28, 63.40, 54.46])
+    marl_focal = np.array([75.46, 76.35, 76.67, 75.71, 74.66])
     
+    fig, ax = plt.subplots()
+    ax.plot(x_axis, random_select, "-->", markersize=15, label="Random Select", lw=3, zorder=3, color="red")
+    ax.plot(x_axis, latest_select, "--*", markersize=15, label="Choose Latest Correct", lw=3, zorder=3, color="darkred")
+    ax.plot(x_axis, marl_focal, "--^", markersize=15, label="MARL-Focal (Size-Constrainted)", lw=3, zorder=3, color="tab:green")
+    ax.legend()
+    ax.grid(zorder=0)
+    ax.set_xticks(x_axis)
+    ax.set_ylabel("Acc (%) \u2191")
+    ax.set_xlabel("Top-k Models Performed in Train Data (k)")
+    ax.set_title("Marl-Focal vs. The Greedy Approaches")
+    plt.savefig("results/figures/compare_greedy_line.png", bbox_inches="tight", dpi=150)
+    # plt.show()
+
+
 
 def run():
     # plot_compare_greedy()
     # plot_scalibility()
     # plot_metric_comparison()
-    # plot_mmlu()
-    plot_hyper_params()
-
-    
-
+    plot_mmlu()
+    # plot_hyper_params()
+    # plot_greedy_line()
 
 
 if __name__ == "__main__":
