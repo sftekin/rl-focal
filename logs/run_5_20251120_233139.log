@@ -1,0 +1,72 @@
+Dataset-0: main
+Episode: 0, Total Acc: 24.79%, Action Counts: [237. 239. 103.], Avg Inf Time: 0.008595s
+Episode: 1, Total Acc: 26.76%, Action Counts: [245. 249. 124.], Avg Inf Time: 0.007652s
+Episode: 2, Total Acc: 28.73%, Action Counts: [256. 269. 132.], Avg Inf Time: 0.007673s
+Episode: 3, Total Acc: 25.63%, Action Counts: [255. 272. 113.], Avg Inf Time: 0.007624s
+Episode: 4, Total Acc: 29.30%, Action Counts: [248. 278. 118.], Avg Inf Time: 0.007605s
+Episode: 5, Total Acc: 29.86%, Action Counts: [232. 280. 144.], Avg Inf Time: 0.00771s
+Episode: 6, Total Acc: 28.73%, Action Counts: [212. 303. 131.], Avg Inf Time: 0.007636s
+Episode: 7, Total Acc: 30.70%, Action Counts: [210. 320. 130.], Avg Inf Time: 0.007823s
+Episode: 8, Total Acc: 29.01%, Action Counts: [198. 307. 123.], Avg Inf Time: 0.007656s
+Episode: 9, Total Acc: 27.61%, Action Counts: [200. 314. 101.], Avg Inf Time: 0.00761s
+Episode: 10, Total Acc: 27.89%, Action Counts: [209. 311.  88.], Avg Inf Time: 0.007648s
+Episode: 11, Total Acc: 29.30%, Action Counts: [194. 319. 112.], Avg Inf Time: 0.007664s
+Episode: 12, Total Acc: 30.14%, Action Counts: [203. 317. 115.], Avg Inf Time: 0.007628s
+Episode: 13, Total Acc: 27.61%, Action Counts: [190. 309. 110.], Avg Inf Time: 0.007608s
+Episode: 14, Total Acc: 27.89%, Action Counts: [180. 305. 115.], Avg Inf Time: 0.007946s
+Episode: 0, Total Acc: 12.11%, Action Counts: [172. 310. 115.], Avg Inf Time: 0.007082s
+Episode: 1, Total Acc: 15.49%, Action Counts: [171. 312. 107.], Avg Inf Time: 0.007016s
+Episode: 2, Total Acc: 17.18%, Action Counts: [173. 309. 118.], Avg Inf Time: 0.007019s
+Episode: 3, Total Acc: 20.00%, Action Counts: [168. 311. 112.], Avg Inf Time: 0.007129s
+Episode: 4, Total Acc: 20.28%, Action Counts: [168. 313. 125.], Avg Inf Time: 0.007102s
+Episode: 5, Total Acc: 23.10%, Action Counts: [172. 312. 107.], Avg Inf Time: 0.007035s
+Episode: 6, Total Acc: 23.94%, Action Counts: [160. 309. 136.], Avg Inf Time: 0.007048s
+Episode: 7, Total Acc: 22.25%, Action Counts: [171. 318. 128.], Avg Inf Time: 0.007086s
+Episode: 8, Total Acc: 23.66%, Action Counts: [160. 310. 119.], Avg Inf Time: 0.007046s
+Episode: 9, Total Acc: 22.25%, Action Counts: [165. 321. 121.], Avg Inf Time: 0.007006s
+Episode: 10, Total Acc: 23.10%, Action Counts: [171. 314. 110.], Avg Inf Time: 0.007011s
+Episode: 11, Total Acc: 23.94%, Action Counts: [169. 306. 126.], Avg Inf Time: 0.007044s
+Episode: 12, Total Acc: 24.51%, Action Counts: [174. 313. 111.], Avg Inf Time: 0.007033s
+Episode: 13, Total Acc: 23.66%, Action Counts: [178. 319.  93.], Avg Inf Time: 0.006994s
+Episode: 14, Total Acc: 22.82%, Action Counts: [162. 316. 133.], Avg Inf Time: 0.00703s
+Episode: 15, Total Acc: 25.63%, Action Counts: [157. 322. 134.], Avg Inf Time: 0.007163s
+Episode: 16, Total Acc: 23.38%, Action Counts: [175. 315. 123.], Avg Inf Time: 0.007073s
+Episode: 17, Total Acc: 25.07%, Action Counts: [161. 308. 140.], Avg Inf Time: 0.007043s
+Episode: 18, Total Acc: 25.63%, Action Counts: [171. 320. 110.], Avg Inf Time: 0.00701s
+Episode: 19, Total Acc: 27.32%, Action Counts: [171. 313. 126.], Avg Inf Time: 0.007036s
+Episode: 20, Total Acc: 26.20%, Action Counts: [175. 299. 112.], Avg Inf Time: 0.006984s
+Episode: 21, Total Acc: 27.89%, Action Counts: [166. 312. 126.], Avg Inf Time: 0.007036s
+Episode: 22, Total Acc: 30.42%, Action Counts: [165. 317. 134.], Avg Inf Time: 0.007039s
+Episode: 23, Total Acc: 28.17%, Action Counts: [165. 316. 128.], Avg Inf Time: 0.007023s
+Episode: 24, Total Acc: 29.01%, Action Counts: [173. 319.  93.], Avg Inf Time: 0.007001s
+Episode: 25, Total Acc: 27.61%, Action Counts: [168. 318. 118.], Avg Inf Time: 0.007017s
+Episode: 26, Total Acc: 29.86%, Action Counts: [170. 316. 129.], Avg Inf Time: 0.007011s
+Episode: 27, Total Acc: 28.17%, Action Counts: [174. 309. 105.], Avg Inf Time: 0.007126s
+Episode: 28, Total Acc: 27.89%, Action Counts: [176. 307. 101.], Avg Inf Time: 0.007037s
+Episode: 29, Total Acc: 30.14%, Action Counts: [158. 319. 119.], Avg Inf Time: 0.007028s
+Episode: 30, Total Acc: 28.17%, Action Counts: [168. 317. 123.], Avg Inf Time: 0.007052s
+Episode: 31, Total Acc: 28.73%, Action Counts: [178. 305. 116.], Avg Inf Time: 0.007013s
+Episode: 32, Total Acc: 30.99%, Action Counts: [166. 322. 113.], Avg Inf Time: 0.007026s
+Episode: 33, Total Acc: 30.14%, Action Counts: [166. 304. 104.], Avg Inf Time: 0.007049s
+Episode: 34, Total Acc: 29.01%, Action Counts: [177. 316.  99.], Avg Inf Time: 0.007021s
+Episode: 35, Total Acc: 29.01%, Action Counts: [181. 319. 103.], Avg Inf Time: 0.007017s
+Episode: 36, Total Acc: 29.30%, Action Counts: [168. 314. 122.], Avg Inf Time: 0.00706s
+Episode: 37, Total Acc: 29.86%, Action Counts: [176. 310. 111.], Avg Inf Time: 0.007033s
+Episode: 38, Total Acc: 30.42%, Action Counts: [172. 311. 118.], Avg Inf Time: 0.007027s
+Episode: 39, Total Acc: 30.42%, Action Counts: [174. 318. 100.], Avg Inf Time: 0.007156s
+Episode: 40, Total Acc: 29.58%, Action Counts: [173. 313. 113.], Avg Inf Time: 0.007056s
+Episode: 41, Total Acc: 28.17%, Action Counts: [171. 313. 111.], Avg Inf Time: 0.007052s
+Episode: 42, Total Acc: 30.42%, Action Counts: [164. 313. 123.], Avg Inf Time: 0.007049s
+Episode: 43, Total Acc: 29.30%, Action Counts: [171. 314. 124.], Avg Inf Time: 0.007085s
+Episode: 44, Total Acc: 30.14%, Action Counts: [161. 323. 136.], Avg Inf Time: 0.007061s
+Episode: 45, Total Acc: 29.30%, Action Counts: [179. 319. 122.], Avg Inf Time: 0.007081s
+Episode: 46, Total Acc: 28.45%, Action Counts: [171. 311. 106.], Avg Inf Time: 0.007025s
+Episode: 47, Total Acc: 29.86%, Action Counts: [164. 310. 138.], Avg Inf Time: 0.007076s
+Episode: 48, Total Acc: 28.17%, Action Counts: [171. 302. 132.], Avg Inf Time: 0.007075s
+Episode: 49, Total Acc: 30.14%, Action Counts: [164. 320. 118.], Avg Inf Time: 0.00705s
+Starting testing
+Episode: 0, Total Acc: 31.24%, Action Counts: [212. 387. 140.], Avg Inf Time: 0.01039s
+
+
+Test Acc: 31.24%
+Data is saved...

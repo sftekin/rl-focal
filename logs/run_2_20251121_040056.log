@@ -1,0 +1,103 @@
+['Llama-2-13b-chat-hf', 'Llama-2-70b-chat-hf', 'Llama-2-7b-chat-hf', 'Mistral-7B-Instruct-v0.2', 'Mixtral-8x7B-Instruct-v0.1', 'gemma-2b', 'gemma-7b', 'phi-2']
+Truncating the space size
+Truncating the space size
+Dataset-0: gsm8k
+Episode: 0, Total Acc: 70.83%, Action Counts: [1437. 1184. 1046. 2031. 2534. 1468. 1019. 1732.], Avg Inf Time: 0.04396s
+Episode: 1, Total Acc: 75.66%, Action Counts: [ 362.  322.  338. 3447. 3483.  348.  854. 1109.], Avg Inf Time: 0.04489s
+Episode: 2, Total Acc: 76.01%, Action Counts: [  46.   78.   48. 3720. 3715.   57.  282.  287.], Avg Inf Time: 0.04424s
+Episode: 3, Total Acc: 76.19%, Action Counts: [  19.    7.   12. 3745. 3731.    8.  103.   58.], Avg Inf Time: 0.0445s
+Episode: 4, Total Acc: 76.30%, Action Counts: [  11.    8.    7. 3745. 3742.   17.   86.   41.], Avg Inf Time: 0.04461s
+Episode: 5, Total Acc: 76.41%, Action Counts: [2.000e+00 4.000e+00 3.000e+00 3.746e+03 3.746e+03 6.000e+00 1.110e+02
+ 1.690e+02], Avg Inf Time: 0.04543s
+Episode: 6, Total Acc: 76.59%, Action Counts: [6.000e+00 6.000e+00 2.000e+00 3.748e+03 3.748e+03 0.000e+00 3.800e+01
+ 1.870e+02], Avg Inf Time: 0.04499s
+Episode: 7, Total Acc: 76.51%, Action Counts: [5.000e+00 3.000e+00 3.000e+00 3.747e+03 3.746e+03 2.000e+00 5.000e+01
+ 5.890e+02], Avg Inf Time: 0.04522s
+Episode: 8, Total Acc: 78.17%, Action Counts: [0.000e+00 3.000e+00 1.000e+00 3.748e+03 3.748e+03 3.000e+00 2.000e+01
+ 3.089e+03], Avg Inf Time: 0.04524s
+Episode: 9, Total Acc: 77.45%, Action Counts: [1.000e+00 1.000e+00 3.000e+00 3.748e+03 3.747e+03 7.000e+00 9.000e+00
+ 1.546e+03], Avg Inf Time: 0.04479s
+Episode: 10, Total Acc: 76.75%, Action Counts: [2.000e+00 0.000e+00 1.300e+01 3.748e+03 3.748e+03 1.200e+01 5.000e+00
+ 6.760e+02], Avg Inf Time: 0.04651s
+Episode: 11, Total Acc: 77.53%, Action Counts: [2.000e+00 0.000e+00 5.000e+00 3.748e+03 3.748e+03 4.000e+00 2.000e+00
+ 1.871e+03], Avg Inf Time: 0.04499s
+Episode: 12, Total Acc: 78.68%, Action Counts: [0.000e+00 0.000e+00 1.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.586e+03], Avg Inf Time: 0.04548s
+Episode: 13, Total Acc: 78.65%, Action Counts: [0.000e+00 0.000e+00 1.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.713e+03], Avg Inf Time: 0.04605s
+Episode: 14, Total Acc: 78.65%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3727.], Avg Inf Time: 0.04589s
+Episode: 0, Total Acc: 42.57%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3725.], Avg Inf Time: 0.03515s
+Episode: 1, Total Acc: 78.06%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3733.], Avg Inf Time: 0.03518s
+Episode: 2, Total Acc: 76.62%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3729.], Avg Inf Time: 0.0346s
+Episode: 3, Total Acc: 76.14%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3727.], Avg Inf Time: 0.03469s
+Episode: 4, Total Acc: 75.74%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3724.], Avg Inf Time: 0.03507s
+Episode: 5, Total Acc: 75.18%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3727.], Avg Inf Time: 0.03508s
+Episode: 6, Total Acc: 75.05%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.723e+03], Avg Inf Time: 0.03373s
+Episode: 7, Total Acc: 75.23%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.747e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.723e+03], Avg Inf Time: 0.02567s
+Episode: 8, Total Acc: 75.05%, Action Counts: [1.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 0.000e+00 0.000e+00
+ 3.720e+03], Avg Inf Time: 0.03374s
+Episode: 9, Total Acc: 75.05%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3729.], Avg Inf Time: 0.03498s
+Episode: 10, Total Acc: 75.05%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.729e+03], Avg Inf Time: 0.03506s
+Episode: 11, Total Acc: 74.89%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3733.], Avg Inf Time: 0.03515s
+Episode: 12, Total Acc: 74.54%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3727.], Avg Inf Time: 0.03401s
+Episode: 13, Total Acc: 74.89%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3735.], Avg Inf Time: 0.03489s
+Episode: 14, Total Acc: 74.78%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3726.], Avg Inf Time: 0.03506s
+Episode: 15, Total Acc: 74.73%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 1.000e+00
+ 3.727e+03], Avg Inf Time: 0.0345s
+Episode: 16, Total Acc: 74.30%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3726.], Avg Inf Time: 0.03404s
+Episode: 17, Total Acc: 74.73%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 1.000e+00
+ 3.726e+03], Avg Inf Time: 0.03489s
+Episode: 18, Total Acc: 74.35%, Action Counts: [1.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.732e+03], Avg Inf Time: 0.03473s
+Episode: 19, Total Acc: 74.11%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3723.], Avg Inf Time: 0.03336s
+Episode: 20, Total Acc: 74.06%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3724.], Avg Inf Time: 0.03477s
+Episode: 21, Total Acc: 74.01%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3734.], Avg Inf Time: 0.03454s
+Episode: 22, Total Acc: 74.25%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.733e+03], Avg Inf Time: 0.03388s
+Episode: 23, Total Acc: 74.17%, Action Counts: [0.000e+00 1.000e+00 1.000e+00 3.748e+03 3.748e+03 0.000e+00 0.000e+00
+ 3.736e+03], Avg Inf Time: 0.0338s
+Episode: 24, Total Acc: 74.01%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3734.], Avg Inf Time: 0.03435s
+Episode: 25, Total Acc: 74.17%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3725.], Avg Inf Time: 0.03394s
+Episode: 26, Total Acc: 73.74%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3732.], Avg Inf Time: 0.03446s
+Episode: 27, Total Acc: 74.49%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.734e+03], Avg Inf Time: 0.03406s
+Episode: 28, Total Acc: 74.17%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3729.], Avg Inf Time: 0.03271s
+Episode: 29, Total Acc: 74.09%, Action Counts: [0.000e+00 0.000e+00 1.000e+00 3.748e+03 3.748e+03 0.000e+00 0.000e+00
+ 3.728e+03], Avg Inf Time: 0.03383s
+Episode: 30, Total Acc: 74.19%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3738.], Avg Inf Time: 0.03345s
+Episode: 31, Total Acc: 74.43%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.730e+03], Avg Inf Time: 0.03376s
+Episode: 32, Total Acc: 73.87%, Action Counts: [1.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 0.000e+00 0.000e+00
+ 3.727e+03], Avg Inf Time: 0.03379s
+Episode: 33, Total Acc: 74.09%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3729.], Avg Inf Time: 0.03272s
+Episode: 34, Total Acc: 74.11%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.718e+03], Avg Inf Time: 0.03394s
+Episode: 35, Total Acc: 74.25%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3725.], Avg Inf Time: 0.03386s
+Episode: 36, Total Acc: 74.38%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3722.], Avg Inf Time: 0.03314s
+Episode: 37, Total Acc: 74.33%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3732.], Avg Inf Time: 0.03347s
+Episode: 38, Total Acc: 74.09%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3728.], Avg Inf Time: 0.03512s
+Episode: 39, Total Acc: 73.77%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 0.000e+00 1.000e+00
+ 3.726e+03], Avg Inf Time: 0.02654s
+Episode: 40, Total Acc: 74.06%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3731.], Avg Inf Time: 0.01613s
+Episode: 41, Total Acc: 74.01%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3721.], Avg Inf Time: 0.01782s
+Episode: 42, Total Acc: 73.77%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3729.], Avg Inf Time: 0.03334s
+Episode: 43, Total Acc: 73.69%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3732.], Avg Inf Time: 0.03365s
+Episode: 44, Total Acc: 73.82%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3731.], Avg Inf Time: 0.03376s
+Episode: 45, Total Acc: 74.06%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 0.000e+00 1.000e+00
+ 3.730e+03], Avg Inf Time: 0.03389s
+Episode: 46, Total Acc: 73.77%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3725.], Avg Inf Time: 0.03246s
+Episode: 47, Total Acc: 74.14%, Action Counts: [0.000e+00 0.000e+00 1.000e+00 3.748e+03 3.748e+03 0.000e+00 0.000e+00
+ 3.735e+03], Avg Inf Time: 0.03395s
+Episode: 48, Total Acc: 74.27%, Action Counts: [   0.    0.    0. 3748. 3748.    0.    0. 3733.], Avg Inf Time: 0.0339s
+Episode: 49, Total Acc: 73.74%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 3.748e+03 3.748e+03 1.000e+00 0.000e+00
+ 3.724e+03], Avg Inf Time: 0.03363s
+Starting testing
+Episode: 0, Total Acc: 74.76%, Action Counts: [0.000e+00 0.000e+00 0.000e+00 4.990e+03 4.990e+03 1.000e+00 1.000e+00
+ 4.928e+03], Avg Inf Time: 0.05234s
+
+
+Test Acc: 74.76%
+Data is saved...
